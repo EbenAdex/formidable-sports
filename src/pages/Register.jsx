@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import { useAuth } from "../context/AuthContext";
+import { createUserProfile } from "../services/profileService";
 
 function Register() {
   const navigate = useNavigate();
@@ -58,14 +59,14 @@ function Register() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setErrorMessage("");
 
     const validationError = validateForm();
-
     if (validationError) {
       setErrorMessage(validationError);
       return;
     }
+
+    setErrorMessage("");
 
     try {
       await register({
@@ -73,10 +74,15 @@ function Register() {
         password: formData.password,
       });
 
-      alert(
-        "Registration successful. Email confirmation will be enabled fully in the production version."
-      );
+      await createUserProfile({
+        fullName: formData.fullName,
+        email: formData.email,
+        department: formData.department,
+        level: formData.level,
+        role: "user",
+      });
 
+      alert("Registration successful.");
       navigate("/login");
     } catch (error) {
       setErrorMessage(error.message || "Registration failed.");

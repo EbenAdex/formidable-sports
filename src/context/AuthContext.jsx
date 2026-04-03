@@ -6,13 +6,13 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { auth } from "../firebase";
+import { getUserProfileByEmail } from "../services/profileService";
 
 const AuthContext = createContext();
 
 const ADMIN_EMAIL = "admin@formidablesports.com";
 const ADMIN_PASSWORD = "Admin@123";
 const ADMIN_STORAGE_KEY = "formidableSportsAdminOverride";
-const USER_STORAGE_KEY = "formidableSportsUser";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -23,18 +23,29 @@ export function AuthProvider({ children }) {
   );
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        setUser(firebaseUser);
+        const profile = await getUserProfileByEmail(firebaseUser.email);
+
+        setUser({
+          email: firebaseUser.email,
+          uid: firebaseUser.uid,
+          role: profile?.role || "user",
+          fullName: profile?.fullName || "N/A",
+          department: profile?.department || "N/A",
+          level: profile?.level || "N/A",
+        });
+
         setHasRegistered(true);
       } else {
-        const savedAdminUser = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || "null");
-
-        if (
-          localStorage.getItem(ADMIN_STORAGE_KEY) === "true" &&
-          savedAdminUser?.role === "admin"
-        ) {
-          setUser(savedAdminUser);
+        if (localStorage.getItem(ADMIN_STORAGE_KEY) === "true") {
+          setUser({
+            email: ADMIN_EMAIL,
+            role: "admin",
+            fullName: "Admin",
+            department: "N/A",
+            level: "N/A",
+          });
           setHasRegistered(true);
         } else {
           setUser(null);
@@ -55,14 +66,15 @@ export function AuthProvider({ children }) {
 
   const login = async ({ email, password }) => {
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      localStorage.setItem(ADMIN_STORAGE_KEY, "true");
+
       const adminUser = {
         email: ADMIN_EMAIL,
         role: "admin",
         fullName: "Admin",
+        department: "N/A",
+        level: "N/A",
       };
-
-      localStorage.setItem(ADMIN_STORAGE_KEY, "true");
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(adminUser));
 
       setAdminOverride(true);
       setUser(adminUser);
@@ -76,23 +88,25 @@ export function AuthProvider({ children }) {
 
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
+    const profile = await getUserProfileByEmail(firebaseUser.email);
 
-    localStorage.setItem(
-      USER_STORAGE_KEY,
-      JSON.stringify({
-        email: firebaseUser.email,
-        role: "user",
-        fullName: firebaseUser.displayName || "User",
-      })
-    );
+    const mergedUser = {
+      email: firebaseUser.email,
+      uid: firebaseUser.uid,
+      role: profile?.role || "user",
+      fullName: profile?.fullName || "N/A",
+      department: profile?.department || "N/A",
+      level: profile?.level || "N/A",
+    };
 
-    return firebaseUser;
+    setUser(mergedUser);
+    setHasRegistered(true);
+
+    return mergedUser;
   };
 
   const logout = async () => {
     localStorage.removeItem(ADMIN_STORAGE_KEY);
-    localStorage.removeItem(USER_STORAGE_KEY);
-
     setAdminOverride(false);
     setUser(null);
     setHasRegistered(false);
