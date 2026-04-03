@@ -111,7 +111,11 @@ function AppRoutes() {
         }
       />
       <Route path="/admin/contact-messages" 
-      element={<ManageContactMessages />} />
+      element={
+        <AdminRoute>
+      <ManageContactMessages />
+        </AdminRoute>
+      } />
       <Route
         path="/admin/results"
         element={
@@ -129,7 +133,13 @@ function AppRoutes() {
         }
       />
 
-      <Route path="/admin/sport-rules" element={<ManageSportRules />} />
+      <Route path="/admin/sport-rules" element={
+        <AdminRoute>
+          <ManageSportRules />
+        </AdminRoute>
+        
+        
+        } />
       <Route
         path="/admin/teams"
         element={
