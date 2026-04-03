@@ -1,0 +1,48 @@
+const defaultSportRules = [
+  {
+    key: "Football",
+    sport: "Football",
+    mode: "clock",
+    enabled: true,
+    periods: 2,
+    periodLabel: "Half",
+    minutesPerPeriod: 30,
+    shortBreakMinutes: 0,
+    halftimeAfterPeriod: 1,
+    halftimeMinutes: 15,
+  },
+  {
+    key: "Basketball",
+    sport: "Basketball",
+    mode: "clock",
+    enabled: true,
+    periods: 4,
+    periodLabel: "Quarter",
+    minutesPerPeriod: 10,
+    shortBreakMinutes: 2,
+    halftimeAfterPeriod: 2,
+    halftimeMinutes: 15,
+  },
+  {
+    key: "Volleyball",
+    sport: "Volleyball",
+    mode: "sets",
+    enabled: true,
+    setsToWin: 3,
+    setTargets: [25, 25, 25, 25, 15],
+    winByTwo: true,
+    intervalBetweenSetsMinutes: 3,
+  },
+  {
+    key: "Table Tennis",
+    sport: "Table Tennis",
+    mode: "sets",
+    enabled: true,
+    setsToWin: 3,
+    setTargets: [11, 11, 11, 11, 11],
+    winByTwo: true,
+    intervalBetweenSetsMinutes: 1,
+  },
+];
+
+export default defaultSportRules;

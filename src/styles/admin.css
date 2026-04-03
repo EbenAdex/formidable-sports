@@ -1,0 +1,356 @@
+.admin-page {
+  min-height: 100vh;
+  padding-top: 7rem;
+  padding-bottom: 4rem;
+  background: var(--light-bg);
+}
+
+.admin-page__wrapper {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.admin-sidebar {
+  background: var(--primary-color);
+  color: var(--white-color);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 6rem;
+}
+
+.admin-sidebar__title {
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+}
+
+.admin-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-sidebar__link {
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  color: var(--white-color);
+  transition: var(--transition);
+}
+
+.admin-sidebar__link:hover,
+.admin-sidebar__link.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--secondary-color);
+}
+
+.admin-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--white-color);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.admin-header__title {
+  color: var(--primary-color);
+  margin-bottom: 0.4rem;
+}
+
+.admin-header__text {
+  color: var(--muted-color);
+}
+
+.admin-header__user {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  color: var(--primary-color);
+}
+
+.admin-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem;
+}
+
+.admin-stat-card {
+  background: var(--white-color);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.admin-stat-card h3 {
+  color: var(--muted-color);
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
+}
+
+.admin-stat-card p {
+  color: var(--primary-color);
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.admin-section-card {
+  background: var(--white-color);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.admin-section-card h2 {
+  color: var(--primary-color);
+  margin-bottom: 0.75rem;
+}
+
+.admin-section-card p {
+  color: var(--muted-color);
+  margin-bottom: 1rem;
+}
+
+.admin-table-wrapper {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f8fafc;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.95rem;
+  border-bottom: 1px solid var(--border-color);
+  color: #0f172a;
+}
+
+.admin-table th {
+  color: #0b1d39;
+  font-size: 0.95rem;
+}
+
+.admin-table td {
+  color: #0f172a;
+}
+
+.admin-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-list-card {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.admin-list-card h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.6rem;
+}
+
+.admin-list-card p {
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 992px) {
+  .admin-page__wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-header__user {
+    text-align: left;
+  }
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-actions button,
+.live-controls button {
+  border: none;
+  background: var(--primary-color);
+  color: var(--white-color);
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.live-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.admin-select {
+  width: 100%;
+  max-width: 420px;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  outline: none;
+}
+
+.admin-table input {
+  width: 70px;
+  padding: 0.45rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+.admin-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-inline-form input,
+.admin-inline-form select {
+  flex: 1 1 220px;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  outline: none;
+  background: var(--white-color);
+}
+
+.squad-warning {
+  color: #b42318;
+  font-weight: 700;
+}
+
+.squad-valid {
+  color: #027a48;
+  font-weight: 700;
+}
+
+
+.admin-dashboard {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.admin-dashboard__hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-dashboard__hero h1 {
+  margin: 0 0 0.5rem;
+  color: #ffffff;
+}
+
+.admin-dashboard__hero p {
+  margin: 0;
+  color: #b8c7e6;
+}
+
+.admin-dashboard__welcome {
+  text-align: right;
+  color: #b8c7e6;
+}
+
+.admin-dashboard__welcome strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: #ffffff;
+  font-size: 1.1rem;
+}
+
+.admin-dashboard__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.admin-stat-card {
+  background: linear-gradient(180deg, #0d2557 0%, #091d46 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.2rem;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.22);
+}
+
+.admin-stat-card span {
+  display: block;
+  color: #b8c7e6;
+  margin-bottom: 0.75rem;
+}
+
+.admin-stat-card strong {
+  color: #ffffff;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.admin-message-box {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-message-box strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.admin-message-box p {
+  margin: 0;
+  color: #c8d6ef;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.admin-section-card h2 {
+  color: #ffffff;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.admin-actions button {
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+}

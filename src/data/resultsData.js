@@ -1,0 +1,48 @@
+const resultsData = [
+  {
+    id: 1,
+    sport: "Football",
+    gender: "Male",
+    homeTeam: "Mass Comm",
+    awayTeam: "Political Science",
+    homeScore: 2,
+    awayScore: 1,
+    date: "2026-04-20",
+    venue: "Main Field",
+  },
+  {
+    id: 2,
+    sport: "Basketball",
+    gender: "Female",
+    homeTeam: "Law",
+    awayTeam: "Medicine",
+    homeScore: 45,
+    awayScore: 38,
+    date: "2026-04-21",
+    venue: "Indoor Court",
+  },
+  {
+    id: 3,
+    sport: "Volleyball",
+    gender: "Male",
+    homeTeam: "Engineering",
+    awayTeam: "Science",
+    homeScore: 3,
+    awayScore: 1,
+    date: "2026-04-22",
+    venue: "Sports Hall",
+  },
+  {
+    id: 4,
+    sport: "Tennis",
+    gender: "Mixed",
+    homeTeam: "Player A",
+    awayTeam: "Player B",
+    homeScore: 2,
+    awayScore: 0,
+    date: "2026-04-23",
+    venue: "Tennis Court",
+  },
+];
+
+export default resultsData;

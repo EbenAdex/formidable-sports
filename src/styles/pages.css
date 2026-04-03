@@ -1,0 +1,338 @@
+.page-shell {
+  min-height: 100vh;
+  background: #071a3d;
+  padding: 2rem 0 4rem;
+  color: #dbe6f7;
+}
+
+.page-header-block {
+  background: linear-gradient(180deg, #0d2557 0%, #091d46 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 1.4rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+}
+
+.page-header-block h1 {
+  margin: 0 0 0.5rem;
+  color: #ffffff;
+}
+
+.page-intro {
+  margin: 0;
+  color: #b8c7e6;
+}
+
+.page-card {
+  background: linear-gradient(180deg, #0d2557 0%, #091d46 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+}
+
+.page-card + .page-card {
+  margin-top: 1.25rem;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.filter-bar input,
+.filter-bar select,
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1c2a4a;
+  padding: 0.9rem 1rem;
+  outline: none;
+}
+
+.contact-form textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.dark-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.two-col {
+  grid-template-columns: 2fr 1fr;
+}
+
+.team-grid-dark,
+.gallery-grid-dark,
+.news-grid-dark,
+.calendar-grid-dark {
+  display: grid;
+  gap: 1rem;
+}
+
+.team-grid-dark {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.news-grid-dark {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.gallery-grid-dark {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.calendar-grid-dark {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.dark-card {
+  background: #0b214e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s ease;
+  color: #dbe6f7;
+}
+
+.dark-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.28);
+}
+
+.dark-card h2,
+.dark-card h3,
+.dark-card h4,
+.dark-card strong {
+  color: #ffffff;
+}
+
+.news-card {
+  background: #0b214e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s ease;
+}
+
+.news-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.28);
+}
+
+.news-card__img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.news-card__body {
+  padding: 1rem;
+  color: #dbe6f7;
+}
+
+.news-card__meta {
+  color: #b8c7e6;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.news-card h3 {
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.contact-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.contact-card {
+  background: #0b214e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+}
+
+.contact-card h2 {
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.contact-success {
+  background: #ecfdf3;
+  color: #027a48;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.dark-card p,
+.dark-card span,
+.dark-card li {
+  color: #b8c7e6;
+}
+
+.dark-link-card {
+  display: block;
+  background: #0b214e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s ease;
+}
+
+.dark-link-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.28);
+}
+
+.dark-link-card h3 {
+  color: #ffffff;
+  margin: 0 0 0.5rem;
+}
+
+.dark-link-card p {
+  color: #b8c7e6;
+  margin: 0 0 0.45rem;
+}
+
+.page-table-wrap {
+  overflow-x: auto;
+}
+
+.page-table-dark {
+  width: 100%;
+  border-collapse: collapse;
+  color: #dbe6f7;
+}
+
+.page-table-dark th,
+.page-table-dark td {
+  padding: 0.9rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.page-table-dark th {
+  color: #f4b400;
+  font-weight: 700;
+}
+
+.contact-page-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.contact-title {
+  color: #ffffff;
+  margin: 0 0 1rem;
+}
+
+.contact-success {
+  margin-bottom: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 10px;
+  background: rgba(15, 157, 88, 0.16);
+  border: 1px solid rgba(15, 157, 88, 0.35);
+  color: #dcffed;
+  font-weight: 700;
+}
+
+.contact-side-block p {
+  color: #b8c7e6;
+  line-height: 1.75;
+}
+
+.calendar-match-title {
+  color: #ffffff;
+  margin: 0 0 0.55rem;
+  line-height: 1.4;
+}
+
+.gallery-dark-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .contact-page-grid,
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-shell {
+    padding: 1.25rem 0 3rem;
+  }
+
+  .page-header-block,
+  .page-card {
+    padding: 1rem;
+  }
+}
+
+.player-card__name {
+  color:#ffffff !important;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 0.65rem;
+}
+
+.page-table-wrap.white-surface {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.page-table-dark.white-surface {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.page-table-dark.white-surface thead {
+  background: #f7f9fc;
+}
+
+.page-table-dark.white-surface th {
+  color: #0f1f44 !important;
+  font-weight: 700;
+  border-bottom: 1px solid #d9e2f2;
+}
+
+.page-table-dark.white-surface td {
+  color: #1c2a4a !important;
+  font-weight: 500;
+  border-bottom: 1px solid #e6ecf5;
+}
+
+.page-table-dark.white-surface tr:hover td {
+  background: #f8fbff;
+}
+
+.page-table-dark.white-surface th,
+.page-table-dark.white-surface td {
+  padding: 0.95rem 0.8rem;
+  text-align: left;
+}
