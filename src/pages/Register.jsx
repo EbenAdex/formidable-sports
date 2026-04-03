@@ -57,37 +57,33 @@ function Register() {
     return "";
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+ 
+const handleSubmit = async (event) => {
+  event.preventDefault();
 
-    const validationError = validateForm();
-    if (validationError) {
-      setErrorMessage(validationError);
-      return;
-    }
+  const validationError = validateForm();
+  if (validationError) {
+    setErrorMessage(validationError);
+    return;
+  }
 
-    setErrorMessage("");
+  setErrorMessage("");
 
-    try {
-      await register({
-        email: formData.email,
-        password: formData.password,
-      });
+  try {
+    await register({
+      email: formData.email,
+      password: formData.password,
+      fullName: formData.fullName,
+      department: formData.department,
+      level: formData.level,
+    });
 
-      await createUserProfile({
-        fullName: formData.fullName,
-        email: formData.email,
-        department: formData.department,
-        level: formData.level,
-        role: "user",
-      });
-
-      alert("Registration successful.");
-      navigate("/login");
-    } catch (error) {
-      setErrorMessage(error.message || "Registration failed.");
-    }
-  };
+    alert("Registration successful.");
+    navigate("/login");
+  } catch (error) {
+    setErrorMessage(error.message || "Registration failed.");
+  }
+};
 
   return (
     <>

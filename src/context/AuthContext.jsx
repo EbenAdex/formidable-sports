@@ -6,7 +6,11 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { auth } from "../firebase";
-import { getUserProfileByEmail } from "../services/profileService";
+import {
+  getUserProfileByEmail,
+  createUserProfile,
+  ensureUserProfile,
+} from "../services/profileService";
 
 const AuthContext = createContext();
 
@@ -24,43 +28,64 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const profile = await getUserProfileByEmail(firebaseUser.email);
-
-        setUser({
-          email: firebaseUser.email,
-          uid: firebaseUser.uid,
-          role: profile?.role || "user",
-          fullName: profile?.fullName || "N/A",
-          department: profile?.department || "N/A",
-          level: profile?.level || "N/A",
-        });
-
-        setHasRegistered(true);
-      } else {
-        if (localStorage.getItem(ADMIN_STORAGE_KEY) === "true") {
-          setUser({
-            email: ADMIN_EMAIL,
-            role: "admin",
-            fullName: "Admin",
+      try {
+        if (firebaseUser) {
+          const profile = await ensureUserProfile({
+            email: firebaseUser.email,
+            fullName: firebaseUser.displayName || "N/A",
             department: "N/A",
             level: "N/A",
+            role: "user",
           });
+
+          setUser({
+            email: firebaseUser.email,
+            uid: firebaseUser.uid,
+            role: profile?.role || "user",
+            fullName: profile?.fullName || "N/A",
+            department: profile?.department || "N/A",
+            level: profile?.level || "N/A",
+          });
+
           setHasRegistered(true);
         } else {
-          setUser(null);
-          setHasRegistered(false);
+          if (localStorage.getItem(ADMIN_STORAGE_KEY) === "true") {
+            setUser({
+              email: ADMIN_EMAIL,
+              role: "admin",
+              fullName: "Admin",
+              department: "N/A",
+              level: "N/A",
+            });
+            setHasRegistered(true);
+          } else {
+            setUser(null);
+            setHasRegistered(false);
+          }
         }
+      } catch (error) {
+        console.error("Auth state profile load failed:", error);
+        setUser(null);
+        setHasRegistered(false);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const register = async ({ email, password }) => {
+  const register = async ({ email, password, fullName, department, level }) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+    await createUserProfile({
+      fullName,
+      email,
+      department,
+      level,
+      role: "user",
+    });
+
     return userCredential.user;
   };
 
@@ -88,7 +113,14 @@ export function AuthProvider({ children }) {
 
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
-    const profile = await getUserProfileByEmail(firebaseUser.email);
+
+    const profile = await ensureUserProfile({
+      email: firebaseUser.email,
+      fullName: firebaseUser.displayName || "N/A",
+      department: "N/A",
+      level: "N/A",
+      role: "user",
+    });
 
     const mergedUser = {
       email: firebaseUser.email,
