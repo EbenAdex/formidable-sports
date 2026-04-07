@@ -16,6 +16,8 @@ function ManageTeams() {
     isSquadValid,
   } = useAppData();
 
+  console.log("teams from context", teams);
+
   const [teamForm, setTeamForm] = useState({
     name: "",
     logo: "",
@@ -55,6 +57,7 @@ function ManageTeams() {
   const [teamCategoryFilter, setTeamCategoryFilter] = useState("all");
   const [teamSportFilter, setTeamSportFilter] = useState("all");
 
+
   const selectedTeam = useMemo(
     () => teams.find((team) => String(team.id) === String(selectedTeamId)),
     [teams, selectedTeamId]
@@ -73,8 +76,7 @@ function ManageTeams() {
   const unidentifiedTeams = useMemo(
     () =>
       teams.filter(
-        (team) =>
-          !["male", "female"].includes((team.category || "").toLowerCase())
+        (team) => !["male", "female"].includes((team.category || "").toLowerCase())
       ),
     [teams]
   );
@@ -117,7 +119,7 @@ function ManageTeams() {
     });
   };
 
-  const handleCreateTeam =  async (event) => {
+  const handleCreateTeam = async (event) => {
     event.preventDefault();
 
     if (!teamForm.name.trim()) return;
@@ -172,7 +174,7 @@ function ManageTeams() {
     setEditingPlayerId(null);
   };
 
-  const handleAddOrUpdatePlayer =  async (event) => {
+  const handleAddOrUpdatePlayer = async (event) => {
     event.preventDefault();
 
     if (!selectedTeam || !playerForm.name.trim()) return;
@@ -294,8 +296,7 @@ function ManageTeams() {
                 <strong>Category:</strong> {team.category}
               </p>
               <p>
-                <strong>Status:</strong>{" "}
-                {team.qualified ? "Qualified" : "Not Qualified"}
+                <strong>Status:</strong> {team.qualified ? "Qualified" : "Not Qualified"}
               </p>
               <p>
                 <strong>Coach:</strong> {team.coach?.name || "Not updated"}
@@ -575,9 +576,7 @@ function ManageTeams() {
           <>
             <p
               className={`page-intro ${
-                (selectedTeam.players?.length || 0) < 25
-                  ? "squad-warning"
-                  : "squad-valid"
+                (selectedTeam.players?.length || 0) < 25 ? "squad-warning" : "squad-valid"
               }`}
             >
               Squad count: {selectedTeam.players?.length || 0}/30
@@ -697,8 +696,7 @@ function ManageTeams() {
         <div className="admin-section-card">
           <h2>Unidentified Teams</h2>
           <p>
-            These teams do not have a valid category. Delete or edit them
-            immediately.
+            These teams do not have a valid category. Delete or edit them immediately.
           </p>
 
           <div className="admin-list">
