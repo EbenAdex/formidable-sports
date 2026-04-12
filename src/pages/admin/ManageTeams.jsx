@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import { useAppData } from "../../context/AppDataContext";
 import facultyDepartments from "../../data/facultyDepartments";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../../firebase"; 
 
 function ManageTeams() {
   const {
@@ -30,6 +32,8 @@ function ManageTeams() {
   const [selectedTeamId, setSelectedTeamId] = useState("");
   const [editingPlayerId, setEditingPlayerId] = useState(null);
   const [editingTeamId, setEditingTeamId] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+const [uploading, setUploading] = useState(false);
 
   const [teamEditForm, setTeamEditForm] = useState({
     name: "",
@@ -50,6 +54,8 @@ function ManageTeams() {
     cleanSheets: "",
     points: "",
     appearances: "",
+    category: "Male",
+    sports: [],
   });
 
   const [teamCategoryFilter, setTeamCategoryFilter] = useState("all");
@@ -117,10 +123,33 @@ function ManageTeams() {
     });
   };
 
+  const uploadLogo = async (file) => {
+  if (!file) return "";
+
+  const fileRef = ref(
+    storage,
+    `team-logos/${Date.now()}-${file.name}`
+  );
+
+  await uploadBytes(fileRef, file);
+  const url = await getDownloadURL(fileRef);
+
+  return url;
+};
+
   const handleCreateTeam =  async (event) => {
     event.preventDefault();
 
     if (!teamForm.name.trim()) return;
+    setUploading(true);
+
+  let logoUrl = teamForm.logo;
+
+  // 👇 upload if file exists
+  if (logoFile) {
+    logoUrl = await uploadLogo(logoFile);
+  }
+
 
     await addTeam({
       name: teamForm.name.trim(),
@@ -137,6 +166,9 @@ function ManageTeams() {
       sports: teamForm.sports,
       players: [],
     });
+
+     setUploading(false);
+  setLogoFile(null);
 
     setTeamForm({
       name: "",
@@ -168,6 +200,8 @@ function ManageTeams() {
       cleanSheets: "",
       points: "",
       appearances: "",
+        category: "Male",
+        sports: [],
     });
     setEditingPlayerId(null);
   };
@@ -189,6 +223,8 @@ function ManageTeams() {
       cleanSheets: Number(playerForm.cleanSheets) || 0,
       points: Number(playerForm.points) || 0,
       appearances: Number(playerForm.appearances) || 0,
+       category: playerForm.category,
+       sports: playerForm.sports,
     };
 
     if (editingPlayerId) {
@@ -213,6 +249,8 @@ function ManageTeams() {
       cleanSheets: String(player.cleanSheets || ""),
       points: String(player.points || ""),
       appearances: String(player.appearances || ""),
+        category: player.category || "",
+    sports: player.sports || [],
     });
   };
 
@@ -353,14 +391,11 @@ function ManageTeams() {
               ))}
             </select>
 
-            <input
-              type="text"
-              name="logo"
-              placeholder="Team logo URL"
-              value={teamForm.logo}
-              onChange={handleTeamChange}
-            />
-
+         <input
+  type="file"
+  accept="image/*"
+  onChange={(e) => setLogoFile(e.target.files[0])}
+/>
             <select
               name="category"
               value={teamForm.category}
@@ -638,6 +673,37 @@ function ManageTeams() {
                   value={playerForm.appearances}
                   onChange={handlePlayerChange}
                 />
+                 <select
+    name="category"
+    value={playerForm.category}
+    onChange={handlePlayerChange}
+  >
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+  </select>
+
+  <div className="admin-checkbox-grid">
+    {sports.map((sport) => (
+      <label className="remember-me" key={sport.id}>
+        <input
+          type="checkbox"
+          checked={playerForm.sports.includes(sport.name)}
+          onChange={() => {
+            setPlayerForm((prev) => {
+              const alreadySelected = prev.sports.includes(sport.name);
+              return {
+                ...prev,
+                sports: alreadySelected
+                  ? prev.sports.filter((s) => s !== sport.name)
+                  : [...prev.sports, sport.name],
+              };
+            });
+          }}
+        />
+        <span>{sport.name}</span>
+      </label>
+    ))}
+              </div>
               </div>
 
               <div className="admin-actions">
@@ -673,6 +739,12 @@ function ManageTeams() {
                   </p>
                   <p>
                     <strong>Appearances:</strong> {player.appearances || 0}
+                  </p>
+                  <p>
+                    <strong>Category:</strong> {player.category || "Not assigned"}
+                  </p>
+                  <p>
+                    <strong>Sports:</strong> {player.sports?.join(", ") || "Not assigned"}
                   </p>
 
                   <div className="admin-actions">

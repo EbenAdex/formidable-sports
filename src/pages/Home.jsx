@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
@@ -22,6 +22,56 @@ function Home() {
 
   const [searchCategory, setSearchCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+   const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      forceUpdate((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 🔥 LIVE MINUTE CALCULATOR
+  const getLiveMinute = (timing) => {
+    if (!timing || !timing.currentPeriodStartedAt) return "";
+
+    if (!timing.isRunning) {
+      if (timing.phase === "Halftime") return "HT";
+      if (timing.phase === "Ended") return "FT";
+      return "";
+    }
+
+    const start = new Date(timing.currentPeriodStartedAt).getTime();
+    const now = Date.now();
+
+    const elapsedSeconds = Math.floor((now - start) / 1000);
+    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+
+    const period = Number(timing.currentPeriod || 1);
+    const periodDuration = Number(timing.periodDurationMinutes || 0);
+
+    // 1st Half
+    if (period === 1) {
+      if (elapsedMinutes <= periodDuration) {
+        return `${elapsedMinutes}'`;
+      }
+      return `${periodDuration}+${elapsedMinutes - periodDuration}'`;
+    }
+
+    // 2nd Half
+    if (period === 2) {
+      const totalMinutes = periodDuration + elapsedMinutes;
+
+      if (elapsedMinutes <= periodDuration) {
+        return `${totalMinutes}'`;
+      }
+
+      return `${periodDuration * 2}+${elapsedMinutes - periodDuration}'`;
+    }
+
+    return `${elapsedMinutes}'`;
+  };
 
   const liveMatches = fixtures.filter((fixture) => fixture?.status === "Live").slice(0, 2);
   const upcomingFixtures = fixtures
@@ -31,7 +81,7 @@ function Home() {
   const topStandings = getSortedTable("Football", "Male").slice(0, 4);
   const qualifiedTeams = facultyDepartments.length;
 
-  const searchableTeams = useMemo(() => {
+    const searchableTeams = useMemo(() => {
     return teams.filter((team) => {
       const category = String(team?.category || "").toLowerCase();
       const validCategory = ["male", "female"].includes(category);
@@ -208,7 +258,12 @@ function Home() {
                         <div className="homepage-match-card__top">
                           <span>{match?.category || match?.gender || "Category"}</span>
                           <span className="homepage-badge">LIVE</span>
+                        
                         </div>
+                            <p className="live-minute">
+                          ⏱ {getLiveMinute(match.timing)}
+                        </p>
+
 
                         <h3>
                           {match?.homeTeam || "Home"} <strong>{match?.score?.home ?? 0}</strong> -{" "}

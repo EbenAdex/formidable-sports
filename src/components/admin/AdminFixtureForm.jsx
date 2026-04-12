@@ -3,6 +3,7 @@ import { useAppData } from "../../context/AppDataContext";
 
 function AdminFixtureForm({ onAddFixture }) {
   const { teams, sports } = useAppData();
+  
 
   const [formData, setFormData] = useState({
     sport: "Football",
@@ -16,6 +17,7 @@ function AdminFixtureForm({ onAddFixture }) {
     endTime: "",
     venue: "",
     status: "Upcoming",
+    periodDurationMinutes: "",
   });
 
   const selectableTeams = useMemo(() => {
@@ -28,23 +30,33 @@ function AdminFixtureForm({ onAddFixture }) {
         )
     );
   }, [teams, formData.category, formData.sport]);
+  console.log("Selectable Teams:", selectableTeams);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+const handleChange = (event) => {
+  const { name, value } = event.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-      ...(name === "sport" || name === "category"
-        ? { homeTeamId: "", awayTeamId: "" }
-        : {}),
-    }));
-  };
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+
+    ...(name === "sport" || name === "category"
+      ? { homeTeamId: "", awayTeamId: "" }
+      : {}),
+
+    // ...(name === "stage" && value !== "Group Stage"
+    //   ? { competitionGroup: "" }
+    //   : {}),
+  }));
+};
 
   const handleSubmit = (event) => {
     event.preventDefault();
 
     if (!formData.homeTeamId || !formData.awayTeamId) return;
+    if (formData.stage === "Group Stage" && !formData.competitionGroup) {
+  alert("Please select a group for group stage fixtures");
+  return;
+}
     if (String(formData.homeTeamId) === String(formData.awayTeamId)) return;
 
     onAddFixture({
@@ -76,7 +88,7 @@ function AdminFixtureForm({ onAddFixture }) {
     currentPeriod: 0,
     totalPeriods: 0,
     periodLabel: "",
-    periodDurationMinutes: 0,
+     periodDurationMinutes: Number(formData.periodDurationMinutes),
     breakDurationMinutes: 0,
     phase: "Pre-Match",
     isRunning: false,
@@ -125,20 +137,28 @@ function AdminFixtureForm({ onAddFixture }) {
           <option value="Female">Female</option>
         </select>
 
-        <select name="stage" value={formData.stage} onChange={handleChange}>
-          <option value="Group Stage">Group Stage</option>
-          <option value="Final">Final</option>
-          <option value="Third Place">Third Place</option>
-        </select>
+     <select name="stage" value={formData.stage} onChange={handleChange}>
+  <option value="Group Stage">Group Stage</option>
+  <option value="Quarter Final">Quarter Final</option>
+  <option value="Semi Final">Semi Final</option>
+  <option value="Final">Final</option>
+  <option value="Third Place">Third Place</option>
+</select>
 
-        <input
-          type="text"
-          name="competitionGroup"
-          placeholder="Group (optional)"
-          value={formData.competitionGroup}
-          onChange={handleChange}
-        />
-
+       {formData.stage === "Group Stage" && (
+  <select
+    name="competitionGroup"
+    value={formData.competitionGroup}
+    onChange={handleChange}
+    required
+  >
+    <option value="">Select Group</option>
+    <option value="A">Group A</option>
+    <option value="B">Group B</option>
+    <option value="C">Group C</option>
+    <option value="D">Group D</option>
+  </select>
+)}
         <select
           name="homeTeamId"
           value={formData.homeTeamId}
@@ -166,6 +186,8 @@ function AdminFixtureForm({ onAddFixture }) {
             </option>
           ))}
         </select>
+
+    
 
         <input
           type="date"
@@ -201,11 +223,24 @@ function AdminFixtureForm({ onAddFixture }) {
           onChange={handleChange}
           required
         />
+
+             <input
+  type="number"
+  name="periodDurationMinutes"
+  value={formData.periodDurationMinutes}
+  onChange={handleChange}
+  placeholder="Period duration (minutes)"
+  min={1}
+  required
+/>
       </div>
+
 
       <button type="submit" className="btn btn--primary">
         Add Fixture
       </button>
+
+     
     </form>
   );
 }

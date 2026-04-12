@@ -454,6 +454,7 @@ const addTableTeam = async (teamName, sport = "Football", category = "Male") => 
     goalDifference: 0,
     points: 0,
     position: 1,
+    group,
   });
 };
 
@@ -832,6 +833,8 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
       )
       .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
   };
+
+  
 
   const value = useMemo(
     () => ({

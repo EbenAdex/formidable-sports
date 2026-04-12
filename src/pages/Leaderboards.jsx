@@ -100,7 +100,7 @@ function Leaderboards() {
                     </div>
                   ))
                 ) : (
-                  <p>No clean sheet data yet.</p>
+                  <p style={{color: 'white'}}>No clean sheet data yet.</p>
                 )}
               </div>
 

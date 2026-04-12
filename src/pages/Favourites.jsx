@@ -10,6 +10,8 @@ function Favourites() {
     favourites.includes(fixture.id)
   );
 
+
+
   return (
     <>
       <Navbar />
@@ -30,7 +32,7 @@ function Favourites() {
                 ))}
               </div>
             ) : (
-              <p>No favourite matches yet.</p>
+              <p style={{color: 'white'}} >No favourite matches yet.</p>
             )}
           </div>
         </div>
@@ -39,5 +41,7 @@ function Favourites() {
     </>
   );
 }
+
+
 
 export default Favourites;

@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import AdminFixtureForm from "../../components/admin/AdminFixtureForm";
 import { useAppData } from "../../context/AppDataContext";
+import defaultSportRules from "../../config/defaultSportRules"
 
 function ManageFixtures() {
   const {
@@ -27,6 +28,22 @@ function ManageFixtures() {
     status: "Upcoming",
     postponed: false,
   });
+
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    fixtures.forEach(fixture => {
+      if (
+        fixture.status === "Upcoming" &&
+        new Date(fixture.date + " " + fixture.kickoffTime) <= new Date()
+      ) {
+        handleStartMatch(fixture);
+      }
+    });
+  }, 1000 * 30); // check every 30 seconds
+
+  return () => clearInterval(interval);
+}, [fixtures]);
 
   const sortedFixtures = useMemo(() => {
     return [...fixtures].sort((a, b) => String(a.date).localeCompare(String(b.date)));
@@ -85,12 +102,64 @@ function ManageFixtures() {
     await deleteFixture(id);
   };
 
-  const handleStartMatch = async (id) => {
-    await updateFixture(id, {
+function getRulesForSport(sportName) {
+  return defaultSportRules.find(
+    (rule) => rule.sport.toLowerCase() === sportName.toLowerCase()
+  );
+}
+
+const handleStartMatch = async (fixture) => {
+  const rules = getRulesForSport(fixture.sport);
+  if (!rules) {
+    alert("No rules defined for this sport");
+    return;
+  }
+
+  if (rules.mode === "clock") {
+    // Time-based sports (Football, Basketball)
+    await updateFixture(fixture.id, {
       status: "Live",
       postponed: false,
+      timing: {
+        mode: "clock",
+        currentPeriod: 1,
+        totalPeriods: rules.periods,
+        periodLabel: rules.periodLabel,
+        periodDurationMinutes: fixture.periodDurationMinutes || rules.minutesPerPeriod,
+        phase: "Live",
+        isRunning: true,
+        startedAt: new Date().toISOString(),
+        currentPeriodStartedAt: new Date().toISOString(),
+        remainingSeconds: (fixture.periodDurationMinutes || rules.minutesPerPeriod) * 60,
+        halftimeAfterPeriod: rules.halftimeAfterPeriod,
+        halftimeMinutes: rules.halftimeMinutes,
+        shortBreakMinutes: rules.shortBreakMinutes,
+      },
     });
-  };
+  }
+
+  if (rules.mode === "sets") {
+    // Set-based sports (Volleyball, Table Tennis)
+    await updateFixture(fixture.id, {
+      status: "Live",
+      postponed: false,
+      timing: {
+        mode: "sets",
+        currentSetNumber: 1,
+        totalSetsToWin: rules.setsToWin,
+        setTargets: rules.setTargets,
+        winByTwo: rules.winByTwo,
+        homeSetsWon: 0,
+        awaySetsWon: 0,
+        currentSetHome: 0,
+        currentSetAway: 0,
+        phase: "Live",
+        isRunning: true,
+        intervalBetweenSetsMinutes: rules.intervalBetweenSetsMinutes,
+      },
+    });
+  }
+};
 
   const handleFinishMatch = async (id) => {
     await updateFixture(id, {
@@ -194,6 +263,16 @@ function ManageFixtures() {
                 required
               />
 
+              <input
+  type="number"
+  name="periodDurationMinutes"
+  value={editForm.periodDurationMinutes}
+  onChange={handleEditChange}
+  placeholder="Enter period duration (minutes)"
+  min={1}
+  required
+/>
+
               <select
                 name="status"
                 value={editForm.status}
@@ -254,10 +333,11 @@ function ManageFixtures() {
                   </button>
 
                   {fixture.status !== "Live" && fixture.status !== "Ended" && (
-                    <button type="button" onClick={() => handleStartMatch(fixture.id)}>
+                    <button type="button" onClick={() => handleStartMatch(fixture)}>
                       Start Match
                     </button>
-                  )}
+                    )}
+                  
 
                   {fixture.status !== "Ended" && (
                     <button type="button" onClick={() => handleFinishMatch(fixture.id)}>

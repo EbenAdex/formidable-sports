@@ -26,6 +26,7 @@ function LiveMatchControl() {
     pointsValue: "1",
     note: "",
   });
+  
 
   const selectedMatch = useMemo(() => {
     return fixtures.find((match) => String(match.id) === String(selectedMatchId));
@@ -46,83 +47,100 @@ function LiveMatchControl() {
   }, [selectedMatch, eventForm.teamSide, getTeamById]);
 
   const timing = selectedMatch?.timing || {};
+  console.log("MATCH TIMING:", selectedMatch?.timing);
 
   const [derivedRemainingSeconds, setDerivedRemainingSeconds] = useState(
     Number(timing.remainingSeconds || 0)
   );
+useEffect(() => {
+  if (!selectedMatch || !rule) return;
+  if (rule.mode !== "clock") return;
 
-  useEffect(() => {
-    if (!selectedMatch || !rule) return;
+  let interval;
 
-    const currentTiming = selectedMatch.timing || {};
+  const computeRemaining = () => {
+    const currentTiming = selectedMatch?.timing || {};
 
-    if (rule.mode !== "clock") return;
+    if (!currentTiming.isRunning || !currentTiming.currentPeriodStartedAt) {
+      return Number(currentTiming.remainingSeconds || 0);
+    }
+    const minutes = Number(currentTiming.periodDurationMinutes);
 
-    const computeRemaining = () => {
-      if (!currentTiming.isRunning || !currentTiming.currentPeriodStartedAt) {
-        return Number(currentTiming.remainingSeconds || 0);
-      }
+  if (!minutes) return 0;
 
-      const startedAt = new Date(currentTiming.currentPeriodStartedAt).getTime();
-      const now = Date.now();
-      const elapsed = Math.floor((now - startedAt) / 1000);
-      const total = Number(currentTiming.periodDurationMinutes || rule.minutesPerPeriod || 0) * 60;
-      return Math.max(total - elapsed, 0);
-    };
+    const startedAt = new Date(currentTiming.currentPeriodStartedAt).getTime();
+    const now = Date.now();
+    const elapsed = Math.floor((now - startedAt) / 1000);
+    const total =
+      Number(currentTiming.periodDurationMinutes || rule.minutesPerPeriod || 0) * 60;
 
-    setDerivedRemainingSeconds(computeRemaining());
+    return Math.max(total - elapsed, 0);
+  };
 
-    const interval = setInterval(() => {
+  setDerivedRemainingSeconds(computeRemaining());
+
+  if (selectedMatch.timing?.isRunning) {
+    interval = setInterval(() => {
       setDerivedRemainingSeconds(computeRemaining());
     }, 1000);
+  }
 
-    return () => clearInterval(interval);
-  }, [selectedMatch, rule]);
+  return () => {
+    if (interval) clearInterval(interval);
+  };
+}, [
+  selectedMatch?.id,
+  selectedMatch?.timing?.isRunning,
+  selectedMatch?.timing?.currentPeriodStartedAt,
+  rule,
+]);
+useEffect(() => {
+  if (!selectedMatch || !rule) return;
+  if (rule.mode !== "clock") return;
 
-  useEffect(() => {
-    if (!selectedMatch || !rule) return;
-    if (rule.mode !== "clock") return;
-    if (!timing.isRunning) return;
-    if (derivedRemainingSeconds > 0) return;
+  // 🚨 Prevent early trigger
+  if (!timing.isRunning) return;
+  if (!timing.currentPeriodStartedAt) return;
 
-    const handleAutoStopAtPeriodEnd = async () => {
-      await updateFixtureWithCallback(selectedMatch.id, (match) => {
-        const current = match.timing || {};
-        const currentPeriod = Number(current.currentPeriod || 1);
-        const totalPeriods = Number(current.totalPeriods || rule.periods || 2);
-        const isFinalPeriod = currentPeriod >= totalPeriods;
-        const isHalftime =
-          currentPeriod === Number(rule.halftimeAfterPeriod || 1) && !isFinalPeriod;
+  // 🚨 Prevent first render bug
+  if (derivedRemainingSeconds === 0 && timing.remainingSeconds > 0) return;
 
-        return {
-          ...match,
-          status: isFinalPeriod ? "Ended" : isHalftime ? "Halftime" : "Break",
-          timing: {
-            ...current,
-            isRunning: false,
-            phase: isFinalPeriod ? "Ended" : isHalftime ? "Halftime" : "Break",
-            remainingSeconds: 0,
-            breakStartedAt: new Date().toISOString(),
-          },
-        };
-      });
+  if (derivedRemainingSeconds > 0) return;
 
-      await recalculateAllPlayerStats();
-      await syncResultsFromEndedFixtures();
-      await recalculateTablesFromEndedFixtures();
-    };
+  const handleAutoStopAtPeriodEnd = async () => {
+    await updateFixtureWithCallback(selectedMatch.id, (match) => {
+      const current = match.timing || {};
+      const currentPeriod = Number(current.currentPeriod || 1);
+      const totalPeriods = Number(current.totalPeriods || rule.periods || 2);
+      const isFinalPeriod = currentPeriod >= totalPeriods;
+      const isHalftime =
+        currentPeriod === Number(rule.halftimeAfterPeriod || 1) && !isFinalPeriod;
 
-    handleAutoStopAtPeriodEnd();
-  }, [
-    derivedRemainingSeconds,
-    selectedMatch,
-    rule,
-    timing.isRunning,
-    updateFixtureWithCallback,
-    recalculateAllPlayerStats,
-    syncResultsFromEndedFixtures,
-    recalculateTablesFromEndedFixtures,
-  ]);
+      return {
+        ...match,
+        status: isFinalPeriod ? "Ended" : isHalftime ? "Halftime" : "Break",
+        timing: {
+          ...current,
+          isRunning: false,
+          phase: isFinalPeriod ? "Ended" : isHalftime ? "Halftime" : "Break",
+          remainingSeconds: 0,
+          breakStartedAt: new Date().toISOString(),
+        },
+      };
+    });
+
+    await recalculateAllPlayerStats();
+    await syncResultsFromEndedFixtures();
+    await recalculateTablesFromEndedFixtures();
+  };
+
+  handleAutoStopAtPeriodEnd();
+}, [
+  derivedRemainingSeconds,
+  selectedMatch,
+  rule,
+  timing.isRunning,
+]);
 
   const handleEventChange = (event) => {
     const { name, value } = event.target;
@@ -304,7 +322,14 @@ function LiveMatchControl() {
   const handleStartClockMatch = async () => {
     if (!selectedMatch || !rule) return;
 
-    const totalSeconds = Number(rule.minutesPerPeriod || 0) * 60;
+    const minutes = Number(selectedMatch.timing?.periodDurationMinutes);
+
+  if (!minutes) {
+    alert("Please set period duration before starting match");
+    return;
+  }
+
+  const totalSeconds = minutes * 60;
 
     await updateFixtureWithCallback(selectedMatch.id, (match) => ({
       ...match,
@@ -315,11 +340,12 @@ function LiveMatchControl() {
         currentPeriod: 1,
         totalPeriods: Number(rule.periods || 2),
         periodLabel: rule.periodLabel || "Half",
-        periodDurationMinutes: Number(rule.minutesPerPeriod || 0),
+        // periodDurationMinutes: Number(rule.minutesPerPeriod || 0),
         breakDurationMinutes: Number(rule.halftimeMinutes || 0),
         phase: "Live",
         isRunning: true,
         startedAt: match.timing?.startedAt || new Date().toISOString(),
+         periodDurationMinutes: minutes,
         currentPeriodStartedAt: new Date().toISOString(),
         breakStartedAt: null,
         remainingSeconds: totalSeconds,
@@ -327,45 +353,61 @@ function LiveMatchControl() {
     }));
   };
 
-  const handlePauseClock = async () => {
-    if (!selectedMatch) return;
+const handlePauseClock = async () => {
+  if (!selectedMatch) return;
 
-    await updateFixtureWithCallback(selectedMatch.id, (match) => ({
+  await updateFixtureWithCallback(selectedMatch.id, (match) => {
+    const current = match.timing || {};
+
+    let remaining = Number(current.remainingSeconds || 0);
+
+    if (current.isRunning && current.currentPeriodStartedAt) {
+      const startedAt = new Date(current.currentPeriodStartedAt).getTime();
+      const now = Date.now();
+      const elapsed = Math.floor((now - startedAt) / 1000);
+      const total =
+        Number(current.periodDurationMinutes || 0) * 60;
+
+      remaining = Math.max(total - elapsed, 0);
+    }
+
+    return {
       ...match,
       timing: {
-        ...(match.timing || {}),
+        ...current,
         isRunning: false,
         phase: "Paused",
-        remainingSeconds: derivedRemainingSeconds,
+        remainingSeconds: remaining,
         pausedAt: new Date().toISOString(),
       },
-    }));
-  };
+    };
+  });
+};
 
-  const handleResumeClock = async () => {
-    if (!selectedMatch || !rule) return;
+ const handleResumeClock = async () => {
+  if (!selectedMatch || !rule) return;
 
-    const remaining = Number(
-      derivedRemainingSeconds || timing.remainingSeconds || rule.minutesPerPeriod * 60
-    );
+  const remaining = Number(timing.remainingSeconds || 0);
+  const totalPeriodSeconds =
+    Number(timing.periodDurationMinutes || 0) * 60;
 
-    const totalPeriodSeconds = Number(rule.minutesPerPeriod || 0) * 60;
-    const startedAt = new Date(Date.now() - (totalPeriodSeconds - remaining) * 1000).toISOString();
+  const startedAt = new Date(
+    Date.now() - (totalPeriodSeconds - remaining) * 1000
+  ).toISOString();
 
-    await updateFixtureWithCallback(selectedMatch.id, (match) => ({
-      ...match,
-      status: "Live",
-      timing: {
-        ...(match.timing || {}),
-        isRunning: true,
-        phase: "Live",
-        currentPeriodStartedAt: startedAt,
-        pausedAt: null,
-        remainingSeconds: remaining,
-      },
-    }));
-  };
-
+  await updateFixtureWithCallback(selectedMatch.id, (match) => ({
+    ...match,
+    status: "Live",
+    timing: {
+      ...(match.timing || {}),
+      isRunning: true,
+      phase: "Live",
+      currentPeriodStartedAt: startedAt,
+      pausedAt: null,
+      remainingSeconds: remaining,
+    },
+  }));
+};
   const handleStartNextClockPeriod = async () => {
     if (!selectedMatch || !rule) return;
 

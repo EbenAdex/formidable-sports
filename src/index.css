@@ -65,6 +65,7 @@ textarea {
   background: var(--primary-color);
   min-height: 100vh;
   padding: 2rem 0 4rem;
+  color: white
 }
 
 .page-header-block {
@@ -87,11 +88,12 @@ textarea {
 }
 
 .page-card {
-  background: linear-gradient(180deg, var(--primary-color-light) 0%, var(--panel-color) 100%);
+  /* background: linear-gradient(180deg, var(--primary-color-light) 0%, var(--panel-color) 100%); */
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   padding: 1.25rem;
   box-shadow: var(--shadow);
+    background-color: var(--light-bg);
 }
 
 .page-card + .page-card {

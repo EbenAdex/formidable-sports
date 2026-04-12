@@ -354,3 +354,56 @@
   min-height: 44px;
   padding: 0.75rem 1rem;
 }
+
+/* MOBILE SIDEBAR BASE */
+.admin-sidebar {
+  transition: transform 0.3s ease;
+}
+
+/* Toggle button (hidden on desktop) */
+.admin-sidebar__toggle {
+  display: none;
+  position: fixed;
+  top: 6.5rem;
+  left: 1rem;
+  z-index: 1001;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Overlay */
+.admin-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+}
+
+/* MOBILE MODE */
+@media (max-width: 992px) {
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 260px;
+    transform: translateX(-100%);
+    z-index: 1002;
+    border-radius: 0;
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .admin-sidebar__toggle {
+    display: block;
+  }
+}
