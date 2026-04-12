@@ -18,6 +18,8 @@ function ManageTeams() {
     isSquadValid,
   } = useAppData();
 
+  console.log("teams from context", teams);
+
   const [teamForm, setTeamForm] = useState({
     name: "",
     logo: "",
@@ -61,6 +63,7 @@ const [uploading, setUploading] = useState(false);
   const [teamCategoryFilter, setTeamCategoryFilter] = useState("all");
   const [teamSportFilter, setTeamSportFilter] = useState("all");
 
+
   const selectedTeam = useMemo(
     () => teams.find((team) => String(team.id) === String(selectedTeamId)),
     [teams, selectedTeamId]
@@ -79,8 +82,7 @@ const [uploading, setUploading] = useState(false);
   const unidentifiedTeams = useMemo(
     () =>
       teams.filter(
-        (team) =>
-          !["male", "female"].includes((team.category || "").toLowerCase())
+        (team) => !["male", "female"].includes((team.category || "").toLowerCase())
       ),
     [teams]
   );
@@ -206,7 +208,7 @@ const [uploading, setUploading] = useState(false);
     setEditingPlayerId(null);
   };
 
-  const handleAddOrUpdatePlayer =  async (event) => {
+  const handleAddOrUpdatePlayer = async (event) => {
     event.preventDefault();
 
     if (!selectedTeam || !playerForm.name.trim()) return;
@@ -332,8 +334,7 @@ const [uploading, setUploading] = useState(false);
                 <strong>Category:</strong> {team.category}
               </p>
               <p>
-                <strong>Status:</strong>{" "}
-                {team.qualified ? "Qualified" : "Not Qualified"}
+                <strong>Status:</strong> {team.qualified ? "Qualified" : "Not Qualified"}
               </p>
               <p>
                 <strong>Coach:</strong> {team.coach?.name || "Not updated"}
@@ -610,9 +611,7 @@ const [uploading, setUploading] = useState(false);
           <>
             <p
               className={`page-intro ${
-                (selectedTeam.players?.length || 0) < 25
-                  ? "squad-warning"
-                  : "squad-valid"
+                (selectedTeam.players?.length || 0) < 25 ? "squad-warning" : "squad-valid"
               }`}
             >
               Squad count: {selectedTeam.players?.length || 0}/30
@@ -769,8 +768,7 @@ const [uploading, setUploading] = useState(false);
         <div className="admin-section-card">
           <h2>Unidentified Teams</h2>
           <p>
-            These teams do not have a valid category. Delete or edit them
-            immediately.
+            These teams do not have a valid category. Delete or edit them immediately.
           </p>
 
           <div className="admin-list">

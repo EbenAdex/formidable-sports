@@ -214,6 +214,7 @@ useEffect(() => {
 
  useEffect(() => {
   const unsubscribe = subscribeToTeams((firestoreTeams) => {
+    console.log("Firestore teams:", firestoreTeams);
     setTeams(firestoreTeams);
   });
 
