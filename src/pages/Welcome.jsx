@@ -13,7 +13,7 @@ function Welcome() {
           <div className="container">
             <div className="welcome-hero__content">
               <span className="welcome-hero__tag">Faculty Sports Platform</span>
-              <h1>Welcome to Formidable Sports</h1>
+              <h1>Welcome to ARTLYMPICS 6.0</h1>
               <p>
                 Follow fixtures, results, standings, teams, rankings, player records,
                 and live competition updates across faculty sports.
