@@ -12,19 +12,22 @@ import {
   subscribeToSportRules,
   updateSportRuleInFirestore,
 } from "../services/sportRulesService";
-import { subscribeToTeams,
-          addTeamToFirestore,
-          updateTeamInFirestore,
-          deleteTeamFromFirestore
- } from "../services/teamService";
- import {
+
+import {
+  subscribeToTeams,
+  addTeamToFirestore,
+  updateTeamInFirestore,
+  deleteTeamFromFirestore,
+} from "../services/teamService";
+
+import {
   subscribeToFixtures,
   addFixtureToFirestore,
   updateFixtureInFirestore,
   deleteFixtureFromFirestore,
- } from "../services/fixtureService";
+} from "../services/fixtureService";
 
- import {
+import {
   subscribeToResults,
   addResultToFirestore,
   updateResultInFirestore,
@@ -46,7 +49,7 @@ import {
 } from "../services/rankingService";
 
 import {
-  subscribeToNews, 
+  subscribeToNews,
   addNewsToFirestore,
   updateNewsInFirestore,
   deleteNewsFromFirestore,
@@ -58,94 +61,46 @@ import {
   deleteContactMessageFromFirestore,
 } from "../services/contactService";
 
+import {
+  subscribeToGallery,
+  addGalleryItemToFirestore,
+  updateGalleryItemInFirestore,
+  deleteGalleryItemFromFirestore,
+} from "../services/galleryService";
+
 const AppDataContext = createContext();
 
 const FIXTURES_KEY = "formidableSportsFixtures";
 const RESULTS_KEY = "formidableSportsResults";
 const NEWS_KEY = "formidableSportsNews";
 const TABLE_KEY = "formidableSportsTable";
-const TEAMS_KEY = "formidableSportsTeams";
 const SPORTS_KEY = "formidableSportsSports";
 const FAVOURITES_KEY = "formidableSportsFavourites";
 
 const VALID_CATEGORIES = ["Male", "Female"];
 
-const defaultTeams = [
-  {
-    id: 1,
-    name: "Philosophy",
-    logo: "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=300&q=80",
-    qualified: true,
-    category: "Male",
-    about: "A disciplined and organized side with strong tactical structure.",
-    coach: {
-      name: "Coach Adebayo",
-      about: "Experienced faculty coach with a focus on discipline and possession play.",
-    },
-    sports: ["Football"],
-    players: [
-      {
-        id: 101,
-        name: "John Musa",
-        position: "Forward",
-        jerseyNumber: 9,
-        goals: 0,
-        cleanSheets: 0,
-        points: 0,
-        appearances: 0,
-      },
-      {
-        id: 102,
-        name: "David Segun",
-        position: "Goalkeeper",
-        jerseyNumber: 1,
-        goals: 0,
-        cleanSheets: 0,
-        points: 0,
-        appearances: 0,
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Economics",
-    logo: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=300&q=80",
-    qualified: true,
-    category: "Male",
-    about: "A competitive team known for direct attacking football.",
-    coach: {
-      name: "Coach Chinedu",
-      about: "Focuses on transitions and quick buildup.",
-    },
-    sports: ["Football"],
-    players: [],
-  },
-  {
-    id: 3,
-    name: "Law",
-    logo: "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=300&q=80",
-    qualified: true,
-    category: "Female",
-    about: "A strong female side with excellent defensive shape.",
-    coach: {
-      name: "Coach Ada",
-      about: "Encourages structured pressing and balance.",
-    },
-    sports: ["Football"],
-    players: [],
-  },
-];
-
 function normalizeText(value = "") {
   return String(value).trim().toLowerCase();
 }
 
-export function isValidCategory(category) {
-  return VALID_CATEGORIES.includes(category);
-}
-
 function ensureArray(value) {
   return Array.isArray(value) ? value : [];
+}
+
+function safeText(value, fallback = "") {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "object") return fallback;
+  return String(value);
+}
+
+function safeId(value, fallback = "") {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "object") return fallback;
+  return String(value);
+}
+
+export function isValidCategory(category) {
+  return VALID_CATEGORIES.includes(category);
 }
 
 export function AppDataProvider({ children }) {
@@ -154,92 +109,26 @@ export function AppDataProvider({ children }) {
     return saved ? JSON.parse(saved) : initialFixtures;
   });
 
-  const getSportRuleBySport = (sportName) => {
-  return sportRules.find(
-    (rule) =>
-      String(rule.sport || "").toLowerCase() === String(sportName || "").toLowerCase()
-  );
-};
-
-const updateSportRule = async (id, updates) => {
-  await updateSportRuleInFirestore(id, updates);
-};
-
-  const [results, setResults] = useState([]);
-    useEffect(() => {
-  const unsubscribe = subscribeToFixtures((firestoreFixtures) => {
-    setRawFixtures(firestoreFixtures);
+  const [results, setResults] = useState(() => {
+    const saved = localStorage.getItem(RESULTS_KEY);
+    return saved ? JSON.parse(saved) : initialResults;
   });
 
-  return () => unsubscribe();
-}, []);
-
-useEffect(() => {
-  const unsubscribe = subscribeToResults((firestoreResults) => {
-    setResults(firestoreResults);
+  const [news, setNews] = useState(() => {
+    const saved = localStorage.getItem(NEWS_KEY);
+    return saved ? JSON.parse(saved) : initialNews;
   });
 
-  return () => unsubscribe();
-}, []);
-
-const [sportRules, setSportRules] = useState([]);
-     useEffect(() => {
-  seedDefaultSportRules(defaultSportRules);
-}, []);
-
-useEffect(() => {
-  const unsubscribe = subscribeToSportRules((firestoreRules) => {
-    setSportRules(firestoreRules);
+  const [table, setTable] = useState(() => {
+    const saved = localStorage.getItem(TABLE_KEY);
+    return saved ? JSON.parse(saved) : initialTable;
   });
 
-  return () => unsubscribe();
-}, []);
-  const [news, setNews] = useState([]);
-    useEffect(() => {
-  const unsubscribe = subscribeToNews((firestoreNews) => {
-    setNews(firestoreNews);
-  });
-
-  return () => unsubscribe();
-}, []);
-
-  const [table, setTable] = useState([]);
-    useEffect(() => {
-      const unsubscribe = subscribeToTables((firestoreRows) => {
-        setTable(firestoreRows);
-      });
-      return () => unsubscribe();
-    }, []);
- const [teams, setTeams] = useState([]);
-
- useEffect(() => {
-  const unsubscribe = subscribeToTeams((firestoreTeams) => {
-    console.log("Firestore teams:", firestoreTeams);
-    setTeams(firestoreTeams);
-  });
-
-  return () => unsubscribe();
-}, []);
-
+  const [teams, setTeams] = useState([]);
   const [rankings, setRankings] = useState([]);
-
-  useEffect(() => {
-  const unsubscribe = subscribeToRankings((firestoreRankings) => {
-    setRankings(firestoreRankings);
-  });
-
-  return () => unsubscribe();
-
-}, []);
-
-   const [ contactMessages, setContactMessages] = useState([]);
-   useEffect(() => {
-  const unsubscribe = subscribeToContactMessages((firestoreMessages) => {
-    setContactMessages(firestoreMessages);
-  });
-
-  return () => unsubscribe();
-}, []);
+  const [contactMessages, setContactMessages] = useState([]);
+  const [sportRules, setSportRules] = useState([]);
+  const [gallery, setGallery] = useState([]);
 
   const [sports, setSports] = useState(() => {
     const saved = localStorage.getItem(SPORTS_KEY);
@@ -251,69 +140,72 @@ useEffect(() => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const getTeamById = (teamId) =>
-  teams.find((team) => String(team.id) === String(teamId));
+  useEffect(() => {
+    seedDefaultSportRules(defaultSportRules);
+  }, []);
 
-  const getTeamByLegacyNameAndCategory = (teamName, category) =>
-    teams.find(
-      (team) =>
-        normalizeText(team.name) === normalizeText(teamName) &&
-        normalizeText(team.category) === normalizeText(category)
-    );
-
-  const getPlayerById = (teamId, playerId) => {
-  const team = getTeamById(teamId);
-  return team?.players?.find((player) => String(player.id) === String(playerId));
-};
-
-  const fixtures = useMemo(() => {
-    return rawFixtures.map((fixture) => {
-      const homeTeam =
-  getTeamById(fixture.homeTeamId) ||
-  getTeamByLegacyNameAndCategory(
-    fixture.homeTeam || fixture.legacyHomeTeamName,
-    fixture.gender || fixture.category
-  );
-
-const awayTeam =
-  getTeamById(fixture.awayTeamId) ||
-  getTeamByLegacyNameAndCategory(
-    fixture.awayTeam || fixture.legacyAwayTeamName,
-    fixture.gender || fixture.category
-  );
-
-      return {
-        ...fixture,
-        category: fixture.category || fixture.gender || homeTeam?.category || awayTeam?.category || "",
-        gender: fixture.category || fixture.gender || homeTeam?.category || awayTeam?.category || "",
-        homeTeamId: homeTeam?.id ?? fixture.homeTeamId ?? null,
-        awayTeamId: awayTeam?.id ?? fixture.awayTeamId ?? null,
-        homeTeam: homeTeam?.name || fixture.homeTeam || "Unknown Team",
-        awayTeam: awayTeam?.name || fixture.awayTeam || "Unknown Team",
-        lineups: {
-          homeCoach: fixture.lineups?.homeCoach || "",
-          awayCoach: fixture.lineups?.awayCoach || "",
-          homePlayerIds: ensureArray(fixture.lineups?.homePlayerIds),
-          awayPlayerIds: ensureArray(fixture.lineups?.awayPlayerIds),
-        },
-        score: {
-          home: fixture.score?.home ?? 0,
-          away: fixture.score?.away ?? 0,
-        },
-        cards: {
-          homeYellow: fixture.cards?.homeYellow ?? 0,
-          awayYellow: fixture.cards?.awayYellow ?? 0,
-          homeRed: fixture.cards?.homeRed ?? 0,
-          awayRed: fixture.cards?.awayRed ?? 0,
-        },
-        substitutions: {
-          home: fixture.substitutions?.home ?? 0,
-          away: fixture.substitutions?.away ?? 0,
-        },
-        events: ensureArray(fixture.events),
-      };
+  useEffect(() => {
+    const unsubscribe = subscribeToSportRules((firestoreRules) => {
+      setSportRules(firestoreRules);
     });
-  }, [rawFixtures, teams]);
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToFixtures((firestoreFixtures) => {
+      setRawFixtures(firestoreFixtures);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToResults((firestoreResults) => {
+      setResults(firestoreResults);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToNews((firestoreNews) => {
+      setNews(firestoreNews);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToTables((firestoreRows) => {
+      setTable(firestoreRows);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToTeams((firestoreTeams) => {
+      setTeams(firestoreTeams);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToRankings((firestoreRankings) => {
+      setRankings(firestoreRankings);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToContactMessages((firestoreMessages) => {
+      setContactMessages(firestoreMessages);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToGallery((firestoreGallery) => {
+      setGallery(firestoreGallery);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(FIXTURES_KEY, JSON.stringify(rawFixtures));
@@ -331,8 +223,6 @@ const awayTeam =
     localStorage.setItem(TABLE_KEY, JSON.stringify(table));
   }, [table]);
 
-  
-
   useEffect(() => {
     localStorage.setItem(SPORTS_KEY, JSON.stringify(sports));
   }, [sports]);
@@ -341,135 +231,318 @@ const awayTeam =
     localStorage.setItem(FAVOURITES_KEY, JSON.stringify(favourites));
   }, [favourites]);
 
+  const getSportRuleBySport = (sportName) => {
+    return sportRules.find(
+      (rule) => normalizeText(rule?.sport) === normalizeText(sportName)
+    );
+  };
+
+  const updateSportRule = async (id, updates) => {
+    await updateSportRuleInFirestore(id, updates);
+  };
+
+  const getTeamById = (teamId) =>
+    teams.find((team) => String(team.id) === String(teamId));
+
+  const getTeamByLegacyIdentity = (teamName, category, sport) =>
+    teams.find(
+      (team) =>
+        normalizeText(team.department || team.name) === normalizeText(teamName) &&
+        normalizeText(team.category) === normalizeText(category) &&
+        normalizeText(team.sport) === normalizeText(sport)
+    );
+
+  const getPlayerById = (teamId, playerId) => {
+    const team = getTeamById(teamId);
+    return team?.players?.find((player) => String(player.id) === String(playerId));
+  };
+
+  const fixtures = useMemo(() => {
+    return rawFixtures.map((fixture) => {
+      const safeSport = safeText(fixture.sport, "");
+      const safeCategory =
+        safeText(fixture.category, "") || safeText(fixture.gender, "");
+
+      const homeTeam =
+        getTeamById(fixture.homeTeamId) ||
+        getTeamByLegacyIdentity(
+          fixture.homeTeam || fixture.legacyHomeTeamName,
+          safeCategory,
+          safeSport
+        );
+
+      const awayTeam =
+        getTeamById(fixture.awayTeamId) ||
+        getTeamByLegacyIdentity(
+          fixture.awayTeam || fixture.legacyAwayTeamName,
+          safeCategory,
+          safeSport
+        );
+
+      return {
+        ...fixture,
+        id: safeId(fixture.id || fixture.localId, ""),
+        localId: safeId(fixture.localId, ""),
+        sport: safeSport,
+        category:
+          safeCategory ||
+          safeText(homeTeam?.category, "") ||
+          safeText(awayTeam?.category, ""),
+        gender:
+          safeCategory ||
+          safeText(homeTeam?.category, "") ||
+          safeText(awayTeam?.category, ""),
+        stage: safeText(fixture.stage, ""),
+        competitionGroup: safeText(fixture.competitionGroup, ""),
+        homeTeamId: safeId(homeTeam?.id || fixture.homeTeamId, ""),
+        awayTeamId: safeId(awayTeam?.id || fixture.awayTeamId, ""),
+        homeTeam:
+          safeText(homeTeam?.department || homeTeam?.name, "") ||
+          safeText(fixture.homeTeam, "Unknown Team"),
+        awayTeam:
+          safeText(awayTeam?.department || awayTeam?.name, "") ||
+          safeText(fixture.awayTeam, "Unknown Team"),
+        date: safeText(fixture.date, ""),
+        kickoffTime: safeText(fixture.kickoffTime, ""),
+        endTime: safeText(fixture.endTime, ""),
+        venue: safeText(fixture.venue, ""),
+        status: safeText(fixture.status, "Upcoming"),
+        postponed: Boolean(fixture.postponed),
+        periodDurationMinutes: Number(fixture.periodDurationMinutes || 0),
+        lineups: {
+          homeCoach: safeText(fixture.lineups?.homeCoach, ""),
+          awayCoach: safeText(fixture.lineups?.awayCoach, ""),
+          homePlayerIds: ensureArray(fixture.lineups?.homePlayerIds),
+          awayPlayerIds: ensureArray(fixture.lineups?.awayPlayerIds),
+        },
+        score: {
+          home: Number(fixture.score?.home ?? 0),
+          away: Number(fixture.score?.away ?? 0),
+        },
+        cards: {
+          homeYellow: Number(fixture.cards?.homeYellow ?? 0),
+          awayYellow: Number(fixture.cards?.awayYellow ?? 0),
+          homeRed: Number(fixture.cards?.homeRed ?? 0),
+          awayRed: Number(fixture.cards?.awayRed ?? 0),
+        },
+        substitutions: {
+          home: Number(fixture.substitutions?.home ?? 0),
+          away: Number(fixture.substitutions?.away ?? 0),
+        },
+        events: ensureArray(fixture.events),
+        timing:
+          fixture.timing && typeof fixture.timing === "object"
+            ? fixture.timing
+            : {
+                mode: "clock",
+                currentPeriod: 0,
+                totalPeriods: 2,
+                periodLabel: "Half",
+                periodDurationMinutes: Number(fixture.periodDurationMinutes || 30),
+                breakDurationMinutes: 0,
+                phase: "Pre-Match",
+                isRunning: false,
+                startedAt: null,
+                pausedAt: null,
+                currentPeriodStartedAt: null,
+                breakStartedAt: null,
+                elapsedSeconds: 0,
+                remainingSeconds: 0,
+                homeSetsWon: 0,
+                awaySetsWon: 0,
+                sets: [],
+                currentSetNumber: 0,
+                currentSetHome: 0,
+                currentSetAway: 0,
+              },
+      };
+    });
+  }, [rawFixtures, teams]);
+
   const addContactMessage = async (message) => {
-  await addContactMessageToFirestore(message);
-};
+    await addContactMessageToFirestore(message);
+  };
 
-const deleteContactMessage = async (id) => {
-  await deleteContactMessageFromFirestore(id);
-};
+  const deleteContactMessage = async (id) => {
+    await deleteContactMessageFromFirestore(id);
+  };
 
- const addFixture = async (fixture) => {
-  await addFixtureToFirestore(fixture);
-};
+  const addFixture = async (fixture) => {
+    await addFixtureToFirestore(fixture);
+  };
 
-const deleteFixture = async (id) => {
-  await deleteFixtureFromFirestore(id);
-};
+  const deleteFixture = async (id) => {
+    await deleteFixtureFromFirestore(id);
+  };
 
-const updateFixture = async (id, updates) => {
-  await updateFixtureInFirestore(id, updates);
-};
+  const updateFixture = async (id, updates) => {
+    await updateFixtureInFirestore(id, updates);
+  };
 
-const updateFixtureWithCallback = async (id, callback) => {
-  const currentFixture = rawFixtures.find(
-    (fixture) => String(fixture.id) === String(id)
-  );
+  const updateFixtureWithCallback = async (id, callback) => {
+    const currentFixture = rawFixtures.find(
+      (fixture) => String(fixture.id) === String(id)
+    );
 
-  if (!currentFixture) return;
+    if (!currentFixture) return null;
 
-  const updatedFixture = callback(currentFixture);
-  await updateFixtureInFirestore(id, updatedFixture);
-};
+    const updatedFixture = callback(currentFixture);
+    await updateFixtureInFirestore(id, updatedFixture);
+    return updatedFixture;
+  };
 
   const addResult = async (result) => {
-  await addResultToFirestore(result);
-};
+    await addResultToFirestore(result);
+  };
 
-const updateResult = async (id, updates) => {
-  await updateResultInFirestore(id, updates);
-};
+  const updateResult = async (id, updates) => {
+    await updateResultInFirestore(id, updates);
+  };
 
-const deleteResult = async (id) => {
-  await deleteResultFromFirestore(id);
-};
+  const deleteResult = async (id) => {
+    await deleteResultFromFirestore(id);
+  };
 
-const syncResultsFromEndedFixtures = async () => {
-  const existingMap = new Map(
-    results.map((result) => [String(result.localId || result.id), result])
-  );
+  const syncSingleResultFromFixture = async (fixture) => {
+    if (!fixture || fixture.status !== "Ended") return;
 
+    const existing = results.find(
+      (result) =>
+        String(result.fixtureId || result.localId || result.id) === String(fixture.id)
+    );
 
- 
+    const summary = ensureArray(fixture.events)
+      .filter((event) =>
+        ["Goal", "Score", "Yellow Card", "Red Card", "Substitution"].includes(event.type)
+      )
+      .slice(0, 10)
+      .map((event) => {
+        const minute = event.minute ? `${event.minute}'` : "";
+        const teamName =
+          event.teamSide === "home" ? fixture.homeTeam : fixture.awayTeam;
 
-  const endedFixtures = fixtures.filter((fixture) => fixture.status === "Ended");
+        return `${minute} ${event.type} - ${teamName}`;
+      })
+      .join(" • ");
 
-  for (const fixture of endedFixtures) {
     const payload = {
-      sport: fixture.sport,
-      gender: fixture.category,
-      category: fixture.category,
-      homeTeamId: fixture.homeTeamId,
-      awayTeamId: fixture.awayTeamId,
-      homeTeam: fixture.homeTeam,
-      awayTeam: fixture.awayTeam,
+      fixtureId: fixture.id,
+      localId: fixture.id,
+      sport: fixture.sport || "",
+      gender: fixture.category || fixture.gender || "",
+      category: fixture.category || fixture.gender || "",
+      stage: fixture.stage || "",
+      competitionGroup: fixture.competitionGroup || "",
+      homeTeamId: fixture.homeTeamId || "",
+      awayTeamId: fixture.awayTeamId || "",
+      homeTeam: fixture.homeTeam || "",
+      awayTeam: fixture.awayTeam || "",
       homeScore: fixture.score?.home ?? 0,
       awayScore: fixture.score?.away ?? 0,
-      date: fixture.date,
-      venue: fixture.venue,
-      localId: fixture.id,
+      date: fixture.date || "",
+      kickoffTime: fixture.kickoffTime || "",
+      endTime: fixture.endTime || "",
+      venue: fixture.venue || "",
+      events: ensureArray(fixture.events),
+      summary:
+        summary ||
+        `${fixture.homeTeam || "Home"} ${fixture.score?.home ?? 0} - ${fixture.score?.away ?? 0} ${fixture.awayTeam || "Away"}`,
     };
-
-    const existing = existingMap.get(String(fixture.id));
 
     if (existing) {
       await updateResultInFirestore(existing.id, payload);
     } else {
       await addResultToFirestore(payload);
     }
-  }
-};
+  };
 
- const addNews = async (item) => {
-  await addNewsToFirestore(item);
-};
+  const syncResultsFromEndedFixtures = async () => {
+    const endedFixtures = fixtures.filter((fixture) => fixture.status === "Ended");
 
-const updateNews = async (id, updates) => {
-  await updateNewsInFirestore(id, updates);
-};
+    for (const fixture of endedFixtures) {
+      await syncSingleResultFromFixture(fixture);
+    }
+  };
 
-const deleteNews = async (id) => {
-  await deleteNewsFromFirestore(id);
-};
+  const addNews = async (item) => {
+    await addNewsToFirestore(item);
+  };
 
- const updateTableRow = async (id, field, value) => {
-  await updateTableRowInFirestore(id, {
-    [field]:
-      ["team", "sport", "category"].includes(field)
+  const updateNews = async (id, updates) => {
+    await updateNewsInFirestore(id, updates);
+  };
+
+  const deleteNews = async (id) => {
+    await deleteNewsFromFirestore(id);
+  };
+
+  const addGalleryItem = async (item) => {
+    await addGalleryItemToFirestore(item);
+  };
+
+  const updateGalleryItem = async (id, updates) => {
+    await updateGalleryItemInFirestore(id, updates);
+  };
+
+  const deleteGalleryItem = async (id) => {
+    await deleteGalleryItemFromFirestore(id);
+  };
+
+  const updateTableRow = async (id, field, value) => {
+    await updateTableRowInFirestore(id, {
+      [field]: ["team", "sport", "category", "competitionGroup"].includes(field)
         ? value
         : Number(value),
-  });
-};
+    });
+  };
 
-const addTableTeam = async (teamName, sport = "Football", category = "Male") => {
-  await addTableRowToFirestore({
-    sport,
-    category,
-    team: teamName,
-    played: 0,
-    won: 0,
-    drawn: 0,
-    lost: 0,
-    goalsFor: 0,
-    goalsAgainst: 0,
-    goalDifference: 0,
-    points: 0,
-    position: 1,
-    group,
-  });
-};
+  const addTableTeam = async (
+    teamName,
+    sport = "Football",
+    category = "Male",
+    competitionGroup = ""
+  ) => {
+    await addTableRowToFirestore({
+      sport,
+      category,
+      competitionGroup,
+      team: teamName,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      goalDifference: 0,
+      points: 0,
+      position: 1,
+    });
+  };
 
-const deleteTableTeam = async (id) => {
-  await deleteTableRowFromFirestore(id);
-};
+  const deleteTableTeam = async (id) => {
+    await deleteTableRowFromFirestore(id);
+  };
 
-const getSortedTable = (sport = "Football", category = "Male") => {
+const getSortedTable = (
+  sport = "Football",
+  category = "Male",
+  competitionGroup = ""
+) => {
   return [...table]
-    .filter(
-      (row) =>
-        (row.sport || "").toLowerCase() === sport.toLowerCase() &&
-        (row.category || "").toLowerCase() === category.toLowerCase()
-    )
+    .filter((row) => {
+      const sameSport =
+        normalizeText(row.sport) === normalizeText(sport);
+      const sameCategory =
+        normalizeText(row.category) === normalizeText(category);
+
+      if (!sameSport || !sameCategory) return false;
+
+      if (competitionGroup) {
+        return normalizeText(row.competitionGroup) === normalizeText(competitionGroup);
+      }
+
+      return normalizeText(row.competitionGroup) !== "";
+    })
     .sort((a, b) => {
       if ((b.points ?? 0) !== (a.points ?? 0)) return (b.points ?? 0) - (a.points ?? 0);
       if ((b.goalDifference ?? 0) !== (a.goalDifference ?? 0)) {
@@ -483,165 +556,163 @@ const getSortedTable = (sport = "Football", category = "Male") => {
     }));
 };
 
-const recalculateTablesFromEndedFixtures = async () => {
-  const leagueFixtures = fixtures.filter(
-    (fixture) =>
-      String(fixture.sport || "").toLowerCase() === "football" &&
-      String(fixture.stage || "").toLowerCase() === "group stage" &&
-      fixture.status === "Ended" &&
-      ["male", "female"].includes(String(fixture.category || "").toLowerCase())
-  );
+  const recalculateTablesFromEndedFixtures = async () => {
+    const leagueFixtures = fixtures.filter(
+      (fixture) =>
+        normalizeText(fixture.stage) === "group stage" &&
+        fixture.status === "Ended" &&
+        ["male", "female"].includes(normalizeText(fixture.category))
+    );
 
-  const grouped = {};
+    const grouped = {};
 
-  leagueFixtures.forEach((fixture) => {
-    const key = `${fixture.sport}__${fixture.category}`;
-    if (!grouped[key]) grouped[key] = {};
+    leagueFixtures.forEach((fixture) => {
+      const key = `${fixture.sport}__${fixture.category}__${fixture.competitionGroup || ""}`;
 
-    const homeName = fixture.homeTeam;
-    const awayName = fixture.awayTeam;
-    const homeScore = fixture.score?.home ?? 0;
-    const awayScore = fixture.score?.away ?? 0;
+      if (!grouped[key]) grouped[key] = {};
 
-    const ensureTeam = (teamName) => {
-      if (!grouped[key][teamName]) {
-        grouped[key][teamName] = {
-          sport: fixture.sport,
-          category: fixture.category,
-          team: teamName,
-          played: 0,
-          won: 0,
-          drawn: 0,
-          lost: 0,
-          goalsFor: 0,
-          goalsAgainst: 0,
-          goalDifference: 0,
-          points: 0,
-          position: 1,
-        };
-      }
-    };
+      const homeName = fixture.homeTeam;
+      const awayName = fixture.awayTeam;
+      const homeScore = fixture.score?.home ?? 0;
+      const awayScore = fixture.score?.away ?? 0;
 
-    ensureTeam(homeName);
-    ensureTeam(awayName);
+      const ensureTeam = (teamName) => {
+        if (!grouped[key][teamName]) {
+          grouped[key][teamName] = {
+            sport: fixture.sport,
+            category: fixture.category,
+            competitionGroup: fixture.competitionGroup || "",
+            team: teamName,
+            played: 0,
+            won: 0,
+            drawn: 0,
+            lost: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            points: 0,
+            position: 1,
+          };
+        }
+      };
 
-    grouped[key][homeName].played += 1;
-    grouped[key][awayName].played += 1;
+      ensureTeam(homeName);
+      ensureTeam(awayName);
 
-    grouped[key][homeName].goalsFor += homeScore;
-    grouped[key][homeName].goalsAgainst += awayScore;
-    grouped[key][awayName].goalsFor += awayScore;
-    grouped[key][awayName].goalsAgainst += homeScore;
+      grouped[key][homeName].played += 1;
+      grouped[key][awayName].played += 1;
+      grouped[key][homeName].goalsFor += homeScore;
+      grouped[key][homeName].goalsAgainst += awayScore;
+      grouped[key][awayName].goalsFor += awayScore;
+      grouped[key][awayName].goalsAgainst += homeScore;
 
-    if (homeScore > awayScore) {
-      grouped[key][homeName].won += 1;
-      grouped[key][homeName].points += 3;
-      grouped[key][awayName].lost += 1;
-    } else if (awayScore > homeScore) {
-      grouped[key][awayName].won += 1;
-      grouped[key][awayName].points += 3;
-      grouped[key][homeName].lost += 1;
-    } else {
-      grouped[key][homeName].drawn += 1;
-      grouped[key][awayName].drawn += 1;
-      grouped[key][homeName].points += 1;
-      grouped[key][awayName].points += 1;
-    }
-  });
-
-  const existingRows = [...table];
-
-  for (const key of Object.keys(grouped)) {
-    const rows = Object.values(grouped[key])
-      .map((row) => ({
-        ...row,
-        goalDifference: row.goalsFor - row.goalsAgainst,
-      }))
-      .sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
-        return b.goalsFor - a.goalsFor;
-      })
-      .map((row, index) => ({
-        ...row,
-        position: index + 1,
-      }));
-
-    for (const row of rows) {
-      const existing = existingRows.find(
-        (item) =>
-          String(item.team || "").toLowerCase() === String(row.team || "").toLowerCase() &&
-          String(item.sport || "").toLowerCase() === String(row.sport || "").toLowerCase() &&
-          String(item.category || "").toLowerCase() === String(row.category || "").toLowerCase()
-      );
-
-      if (existing) {
-        await updateTableRowInFirestore(existing.id, row);
+      if (homeScore > awayScore) {
+        grouped[key][homeName].won += 1;
+        grouped[key][homeName].points += 3;
+        grouped[key][awayName].lost += 1;
+      } else if (awayScore > homeScore) {
+        grouped[key][awayName].won += 1;
+        grouped[key][awayName].points += 3;
+        grouped[key][homeName].lost += 1;
       } else {
-        await addTableRowToFirestore(row);
+        grouped[key][homeName].drawn += 1;
+        grouped[key][awayName].drawn += 1;
+        grouped[key][homeName].points += 1;
+        grouped[key][awayName].points += 1;
+      }
+    });
+
+    const existingRows = [...table];
+
+    for (const key of Object.keys(grouped)) {
+      const rows = Object.values(grouped[key])
+        .map((row) => ({
+          ...row,
+          goalDifference: row.goalsFor - row.goalsAgainst,
+        }))
+        .sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+          return b.goalsFor - a.goalsFor;
+        })
+        .map((row, index) => ({
+          ...row,
+          position: index + 1,
+        }));
+
+      for (const row of rows) {
+        const existing = existingRows.find(
+          (item) =>
+            normalizeText(item.team) === normalizeText(row.team) &&
+            normalizeText(item.sport) === normalizeText(row.sport) &&
+            normalizeText(item.category) === normalizeText(row.category) &&
+            normalizeText(item.competitionGroup) === normalizeText(row.competitionGroup)
+        );
+
+        if (existing) {
+          await updateTableRowInFirestore(existing.id, row);
+        } else {
+          await addTableRowToFirestore(row);
+        }
       }
     }
-  }
-};
+  };
 
   const addTeam = async (team) => {
-  await addTeamToFirestore({
-    ...team,
-    players: team.players || [],
-    sports: team.sports || [],
-  });
-};
+    await addTeamToFirestore({
+      ...team,
+      players: team.players || [],
+    });
+  };
 
-const updateTeam = async (id, updates) => {
-  await updateTeamInFirestore(id, updates);
-};
+  const updateTeam = async (id, updates) => {
+    await updateTeamInFirestore(id, updates);
+  };
 
-const deleteTeam = async (id) => {
-  await deleteTeamFromFirestore(id);
-};
+  const deleteTeam = async (id) => {
+    await deleteTeamFromFirestore(id);
+  };
 
-const addPlayerToTeam = async (teamId, player) => {
-  const team = teams.find((item) => String(item.id) === String(teamId));
-  if (!team) return;
+  const addPlayerToTeam = async (teamId, player) => {
+    const team = teams.find((item) => String(item.id) === String(teamId));
+    if (!team) return;
 
-  const currentPlayers = team.players || [];
+    const currentPlayers = team.players || [];
+    if (currentPlayers.length >= 30) return;
 
-  if (currentPlayers.length >= 30) return;
+    await updateTeamInFirestore(teamId, {
+      players: [...currentPlayers, player],
+    });
+  };
 
-  await updateTeamInFirestore(teamId, {
-    players: [...currentPlayers, player],
-  });
-};
+  const updatePlayerInTeam = async (teamId, playerId, updates) => {
+    const team = teams.find((item) => String(item.id) === String(teamId));
+    if (!team) return;
 
-const updatePlayerInTeam = async (teamId, playerId, updates) => {
-  const team = teams.find((item) => String(item.id) === String(teamId));
-  if (!team) return;
+    const updatedPlayers = (team.players || []).map((player) =>
+      String(player.id) === String(playerId) ? { ...player, ...updates } : player
+    );
 
-  const updatedPlayers = (team.players || []).map((player) =>
-    String(player.id) === String(playerId)
-      ? { ...player, ...updates }
-      : player
-  );
+    await updateTeamInFirestore(teamId, {
+      players: updatedPlayers,
+    });
+  };
 
-  await updateTeamInFirestore(teamId, {
-    players: updatedPlayers,
-  });
-};
+  const deletePlayerFromTeam = async (teamId, playerId) => {
+    const team = teams.find((item) => String(item.id) === String(teamId));
+    if (!team) return;
 
-const deletePlayerFromTeam = async (teamId, playerId) => {
-  const team = teams.find((item) => String(item.id) === String(teamId));
-  if (!team) return;
+    const updatedPlayers = (team.players || []).filter(
+      (player) => String(player.id) !== String(playerId)
+    );
 
-  const updatedPlayers = (team.players || []).filter(
-    (player) => String(player.id) !== String(playerId)
-  );
+    await updateTeamInFirestore(teamId, {
+      players: updatedPlayers,
+    });
+  };
 
-  await updateTeamInFirestore(teamId, {
-    players: updatedPlayers,
-  });
-};
   const isSquadValid = (teamId) => {
-    const team = teams.find((item) => String (item.id) === String(teamId));
+    const team = teams.find((item) => String(item.id) === String(teamId));
     if (!team) return false;
 
     const count = (team.players || []).length;
@@ -657,6 +728,7 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
           goals: 0,
           cleanSheets: 0,
           appearances: 0,
+          points: 0,
         })),
       }));
 
@@ -665,8 +737,8 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
       );
 
       fixturesForStats.forEach((fixture) => {
-        const homeTeam = nextTeams.find((team) => team.id === fixture.homeTeamId);
-        const awayTeam = nextTeams.find((team) => team.id === fixture.awayTeamId);
+        const homeTeam = nextTeams.find((team) => String(team.id) === String(fixture.homeTeamId));
+        const awayTeam = nextTeams.find((team) => String(team.id) === String(fixture.awayTeamId));
 
         const homeAppearanceIds = new Set([
           ...ensureArray(fixture.lineups?.homePlayerIds),
@@ -705,17 +777,22 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
           if (!currentTeam || !event.playerId) return;
 
           currentTeam.players = (currentTeam.players || []).map((player) => {
-            if (player.id !== Number(event.playerId)) return player;
+            if (String(player.id) !== String(event.playerId)) return player;
 
             if (normalizeText(fixture.sport) === "football" && event.type === "Goal") {
               return { ...player, goals: (player.goals || 0) + 1 };
             }
 
             if (
-              ["basketball", "volleyball", "tennis"].includes(normalizeText(fixture.sport)) &&
+              ["basketball", "volleyball", "table tennis", "tennis"].includes(
+                normalizeText(fixture.sport)
+              ) &&
               event.type === "Score"
             ) {
-              return { ...player, points: (player.points || 0) + (Number(event.pointsValue) || 1) };
+              return {
+                ...player,
+                points: (player.points || 0) + (Number(event.pointsValue) || 1),
+              };
             }
 
             return player;
@@ -765,24 +842,29 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
 
   const getTeamFixtures = (teamId) =>
     fixtures.filter(
-      (fixture) => fixture.homeTeamId === Number(teamId) || fixture.awayTeamId === Number(teamId)
+      (fixture) =>
+        String(fixture.homeTeamId) === String(teamId) ||
+        String(fixture.awayTeamId) === String(teamId)
     );
 
   const getPlayerMatchHistory = (teamId, playerId) => {
     const teamFixtures = getTeamFixtures(teamId);
 
     return teamFixtures.filter((fixture) => {
+      const playerIdAsString = String(playerId);
+
       const started =
-        ensureArray(fixture.lineups?.homePlayerIds).includes(Number(playerId)) ||
-        ensureArray(fixture.lineups?.awayPlayerIds).includes(Number(playerId));
+        ensureArray(fixture.lineups?.homePlayerIds).some((id) => String(id) === playerIdAsString) ||
+        ensureArray(fixture.lineups?.awayPlayerIds).some((id) => String(id) === playerIdAsString);
 
       const subbedIn = ensureArray(fixture.events).some(
         (event) =>
-          event.type === "Substitution" && Number(event.playerInId) === Number(playerId)
+          event.type === "Substitution" &&
+          String(event.playerInId) === playerIdAsString
       );
 
       const hadEvent = ensureArray(fixture.events).some(
-        (event) => Number(event.playerId) === Number(playerId)
+        (event) => String(event.playerId) === playerIdAsString
       );
 
       return started || subbedIn || hadEvent;
@@ -829,13 +911,11 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
     return [...rankings]
       .filter(
         (item) =>
-          String(item.sport || "").toLowerCase() === String(sport || "").toLowerCase() &&
-          String(item.category || "").toLowerCase() === String(category || "").toLowerCase()
+          normalizeText(item.sport) === normalizeText(sport) &&
+          normalizeText(item.category) === normalizeText(category)
       )
       .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
   };
-
-  
 
   const value = useMemo(
     () => ({
@@ -847,6 +927,7 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
       teams,
       sports,
       favourites,
+      gallery,
       facultyDepartments,
       getTeamById,
       getPlayerById,
@@ -860,8 +941,13 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
       updateResult,
       deleteResult,
       syncResultsFromEndedFixtures,
+      syncSingleResultFromFixture,
       addNews,
+      updateNews,
       deleteNews,
+      addGalleryItem,
+      updateGalleryItem,
+      deleteGalleryItem,
       updateTableRow,
       addTableTeam,
       deleteTableTeam,
@@ -886,9 +972,6 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
       updateRanking,
       deleteRanking,
       getRankingsBySportAndCategory,
-      addNews,
-      updateNews,
-      deleteNews,
       contactMessages,
       addContactMessage,
       deleteContactMessage,
@@ -896,7 +979,20 @@ const deletePlayerFromTeam = async (teamId, playerId) => {
       getSportRuleBySport,
       updateSportRule,
     }),
-    [fixtures, rawFixtures, results, news, table, teams, sports, favourites]
+    [
+      fixtures,
+      rawFixtures,
+      results,
+      news,
+      table,
+      teams,
+      sports,
+      favourites,
+      gallery,
+      rankings,
+      contactMessages,
+      sportRules,
+    ]
   );
 
   return (

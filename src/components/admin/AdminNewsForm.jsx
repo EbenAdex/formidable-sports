@@ -4,7 +4,8 @@ function AdminNewsForm({ onAddNews }) {
   const [formData, setFormData] = useState({
     category: "",
     title: "",
-    excerpt: "",
+    summary: "",
+    content: "",
     image: "",
   });
 
@@ -17,23 +18,23 @@ function AdminNewsForm({ onAddNews }) {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const newNews = {
       ...formData,
-      id: Date.now(),
       image:
         formData.image ||
         "https://images.unsplash.com/photo-1547347298-4074fc3086f0?auto=format&fit=crop&w=800&q=80",
     };
 
-    onAddNews(newNews);
+    await onAddNews(newNews);
 
     setFormData({
       category: "",
       title: "",
-      excerpt: "",
+      summary: "",
+      content: "",
       image: "",
     });
   };
@@ -49,6 +50,7 @@ function AdminNewsForm({ onAddNews }) {
           onChange={handleChange}
           required
         />
+
         <input
           type="text"
           name="title"
@@ -57,6 +59,7 @@ function AdminNewsForm({ onAddNews }) {
           onChange={handleChange}
           required
         />
+
         <input
           type="text"
           name="image"
@@ -64,12 +67,22 @@ function AdminNewsForm({ onAddNews }) {
           value={formData.image}
           onChange={handleChange}
         />
+
         <textarea
-          name="excerpt"
-          placeholder="News excerpt"
-          value={formData.excerpt}
+          name="summary"
+          placeholder="Short summary"
+          value={formData.summary}
           onChange={handleChange}
-          rows="4"
+          rows="3"
+          required
+        />
+
+        <textarea
+          name="content"
+          placeholder="Full news content"
+          value={formData.content}
+          onChange={handleChange}
+          rows="6"
           required
         />
       </div>

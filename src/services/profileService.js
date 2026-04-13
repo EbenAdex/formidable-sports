@@ -1,67 +1,49 @@
 import {
-  doc,
-  setDoc,
-  getDoc,
+  addDoc,
+  collection,
+  getDocs,
+  query,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
-export async function createUserProfile(profileData) {
-  if (!profileData?.email) {
-    throw new Error("Email is required to create a profile.");
-  }
-
-  const profileRef = doc(db, "profiles", profileData.email);
-
-  await setDoc(profileRef, {
-    fullName: profileData.fullName || "N/A",
-    email: profileData.email,
-    department: profileData.department || "N/A",
-    level: profileData.level || "N/A",
-    role: profileData.role || "user",
-    createdAt: profileData.createdAt || new Date().toISOString(),
-  });
-}
+const profilesCollection = collection(db, "profiles");
 
 export async function getUserProfileByEmail(email) {
-  if (!email) return null;
+  const q = query(profilesCollection, where("email", "==", email));
+  const snapshot = await getDocs(q);
 
-  const profileRef = doc(db, "profiles", email);
-  const snapshot = await getDoc(profileRef);
+  if (snapshot.empty) return null;
 
-  if (!snapshot.exists()) return null;
-
+  const docItem = snapshot.docs[0];
   return {
-    id: snapshot.id,
-    ...snapshot.data(),
+    id: docItem.id,
+    ...docItem.data(),
   };
 }
 
-export async function ensureUserProfile(profileData) {
-  if (!profileData?.email) {
-    throw new Error("Email is required to ensure a profile.");
-  }
-
-  const existingProfile = await getUserProfileByEmail(profileData.email);
-
-  if (existingProfile) {
-    return existingProfile;
-  }
-
-  await createUserProfile({
-    fullName: profileData.fullName || "N/A",
-    email: profileData.email,
-    department: profileData.department || "N/A",
-    level: profileData.level || "N/A",
-    role: profileData.role || "user",
-  });
-
-  return await getUserProfileByEmail(profileData.email);
+export async function createUserProfile(profile) {
+  await addDoc(profilesCollection, profile);
 }
 
-export async function updateUserProfile(email, updates) {
-  if (!email) return;
+export async function ensureUserProfile(profile) {
+  const existing = await getUserProfileByEmail(profile.email);
 
-  const profileRef = doc(db, "profiles", email);
-  await updateDoc(profileRef, updates);
+  if (existing) return existing;
+
+  await createUserProfile(profile);
+  return await getUserProfileByEmail(profile.email);
+}
+
+export async function updateUserProfileByEmail(email, updates) {
+  const q = query(profilesCollection, where("email", "==", email));
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) {
+    throw new Error("Profile not found.");
+  }
+
+  const docRef = snapshot.docs[0].ref;
+  await updateDoc(docRef, updates);
 }

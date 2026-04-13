@@ -18,6 +18,7 @@ function FixtureCalendar() {
   return (
     <>
       <Navbar />
+      <div className="navbar-spacer" />
       <main className="page-shell">
         <div className="container">
           <div className="page-header-block">

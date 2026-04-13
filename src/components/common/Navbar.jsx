@@ -39,7 +39,7 @@ function Navbar() {
         </button>
 
         <nav className={`navbar__nav ${menuOpen ? "navbar__nav--open" : ""}`}>
-          <NavLink to="/" className="navbar__home-link" onClick={closeMenu}>
+          <NavLink to="/home" className="navbar__home-link" onClick={closeMenu}>
             Home
           </NavLink>
 
@@ -218,11 +218,11 @@ function Navbar() {
               </NavLink>
 
               <NavLink
-                to="/faq"
+                to="/about-fasa"
                 className="navbar__dropdown-link"
                 onClick={closeMenu}
               >
-                FAQ
+                About FASA
               </NavLink>
 
               <NavLink

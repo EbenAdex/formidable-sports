@@ -1,31 +1,4 @@
 .footer {
-  background-color: var(--primary-color);
-  color: var(--white-color);
-  padding: 3rem 0;
-}
-
-.footer__wrapper {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 2rem;
-}
-
-.footer__title,
-.footer__subtitle {
-  margin-bottom: 1rem;
-}
-
-.footer__text {
-  color: #d4d9e3;
-  margin-bottom: 0.6rem;
-}
-
-.footer__list li {
-  margin-bottom: 0.6rem;
-  color: #d4d9e3;
-}
-
-.footer {
   background: var(--primary-color);
   color: var(--white-color);
   padding: 3rem 0 1.5rem;
@@ -45,7 +18,7 @@
 }
 
 .footer__brand p {
-  color: #dbe4f0;
+  color: #d0d0d0;
   line-height: 1.7;
 }
 
@@ -57,12 +30,12 @@
 
 .footer__links h4 {
   margin-bottom: 0.9rem;
-  color: var(--secondary-color);
+  color: var(--accent-color);
 }
 
 .footer__links a {
   display: block;
-  color: #edf2f7;
+  color: #f0f0f0;
   margin-bottom: 0.7rem;
   transition: var(--transition);
 }
@@ -88,11 +61,11 @@
 }
 
 .footer__bottom p {
-  color: #dbe4f0;
+  color: #d0d0d0;
 }
 
 .footer__stamp span {
-  color: var(--secondary-color);
+  color: var(--accent-color);
   font-weight: 700;
 }
 

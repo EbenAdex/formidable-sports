@@ -15,7 +15,7 @@ function Footer() {
         <div className="footer__links">
           <div>
             <h4>Platform</h4>
-            <Link to="/">Home</Link>
+            <Link to="/home">Home</Link>
             <Link to="/fixtures">Fixtures</Link>
             <Link to="/results">Results</Link>
             <Link to="/table">Table</Link>
@@ -27,6 +27,7 @@ function Footer() {
             <Link to="/gallery">Gallery</Link>
             <Link to="/faq">FAQ</Link>
             <Link to="/contact">Contact</Link>
+            <Link to="/about-fasa">About FASA</Link>
           </div>
 
           <div>
@@ -38,7 +39,7 @@ function Footer() {
               className="footer__social"
             >
               <span>📸</span>
-              <span>Instagram</span>
+              <span>@officialfasaunilag</span>
             </a>
 
             <a
@@ -56,7 +57,7 @@ function Footer() {
               className="footer__social"
             >
               <span>✉️</span>
-              <span>faculty@gmail.com</span>
+              <span>thefasaunilag@gmail.com</span>
             </a>
           </div>
         </div>

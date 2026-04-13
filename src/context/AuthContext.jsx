@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -7,7 +7,6 @@ import {
 } from "firebase/auth";
 import { auth } from "../firebase";
 import {
-  getUserProfileByEmail,
   createUserProfile,
   ensureUserProfile,
 } from "../services/profileService";
@@ -17,6 +16,7 @@ const AuthContext = createContext();
 const ADMIN_EMAIL = "admin@formidablesports.com";
 const ADMIN_PASSWORD = "Admin@123";
 const ADMIN_STORAGE_KEY = "formidableSportsAdminOverride";
+const INACTIVITY_LIMIT = 30 * 60 * 1000;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -25,6 +25,42 @@ export function AuthProvider({ children }) {
   const [adminOverride, setAdminOverride] = useState(
     localStorage.getItem(ADMIN_STORAGE_KEY) === "true"
   );
+
+  const inactivityTimerRef = useRef(null);
+
+  const clearInactivityTimer = () => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+  };
+
+  const logout = async (redirectToLogin = true) => {
+    clearInactivityTimer();
+    localStorage.removeItem(ADMIN_STORAGE_KEY);
+    setAdminOverride(false);
+    setUser(null);
+    setHasRegistered(false);
+
+    if (auth.currentUser) {
+      await signOut(auth);
+    }
+
+    if (redirectToLogin) {
+      window.location.href = "/login";
+    }
+  };
+
+  const resetInactivityTimer = () => {
+    clearInactivityTimer();
+
+    if (!user) return;
+
+    inactivityTimerRef.current = setTimeout(async () => {
+      alert("You have been logged out due to 30 minutes of inactivity.");
+      await logout(true);
+    }, INACTIVITY_LIMIT);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -74,6 +110,39 @@ export function AuthProvider({ children }) {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      clearInactivityTimer();
+      return;
+    }
+
+    const activityEvents = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+
+    const handleActivity = () => {
+      resetInactivityTimer();
+    };
+
+    activityEvents.forEach((eventName) => {
+      window.addEventListener(eventName, handleActivity);
+    });
+
+    resetInactivityTimer();
+
+    return () => {
+      activityEvents.forEach((eventName) => {
+        window.removeEventListener(eventName, handleActivity);
+      });
+      clearInactivityTimer();
+    };
+  }, [user]);
 
   const register = async ({ email, password, fullName, department, level }) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -137,18 +206,8 @@ export function AuthProvider({ children }) {
     return mergedUser;
   };
 
-  const logout = async () => {
-    localStorage.removeItem(ADMIN_STORAGE_KEY);
-    setAdminOverride(false);
-    setUser(null);
-    setHasRegistered(false);
-
-    if (auth.currentUser) {
-      await signOut(auth);
-    }
-  };
-
-  const isAdmin = adminOverride || user?.role === "admin" || user?.email === ADMIN_EMAIL;
+  const isAdmin =
+    adminOverride || user?.role === "admin" || user?.email === ADMIN_EMAIL;
 
   const value = useMemo(
     () => ({
@@ -160,6 +219,7 @@ export function AuthProvider({ children }) {
       register,
       login,
       logout,
+      resetInactivityTimer,
     }),
     [user, loading, hasRegistered, adminOverride, isAdmin]
   );

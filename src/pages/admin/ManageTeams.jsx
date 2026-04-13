@@ -2,8 +2,7 @@ import { useMemo, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import { useAppData } from "../../context/AppDataContext";
 import facultyDepartments from "../../data/facultyDepartments";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../../firebase"; 
+
 
 function ManageTeams() {
   const {
@@ -18,34 +17,30 @@ function ManageTeams() {
     isSquadValid,
   } = useAppData();
 
-  console.log("teams from context", teams);
-
   const [teamForm, setTeamForm] = useState({
-    name: "",
+    department: "",
+    sport: "",
     logo: "",
     about: "",
     coachName: "",
     coachAbout: "",
     qualified: true,
     category: "Male",
-    sports: [],
   });
 
   const [selectedTeamId, setSelectedTeamId] = useState("");
   const [editingPlayerId, setEditingPlayerId] = useState(null);
   const [editingTeamId, setEditingTeamId] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
-const [uploading, setUploading] = useState(false);
-
+  
   const [teamEditForm, setTeamEditForm] = useState({
-    name: "",
+    department: "",
+    sport: "",
     logo: "",
     about: "",
     coachName: "",
     coachAbout: "",
     qualified: true,
     category: "Male",
-    sports: [],
   });
 
   const [playerForm, setPlayerForm] = useState({
@@ -56,12 +51,11 @@ const [uploading, setUploading] = useState(false);
     cleanSheets: "",
     points: "",
     appearances: "",
-    category: "Male",
-    sports: [],
   });
 
   const [teamCategoryFilter, setTeamCategoryFilter] = useState("all");
   const [teamSportFilter, setTeamSportFilter] = useState("all");
+  const [uploading, setUploading] = useState(false);
 
 
   const selectedTeam = useMemo(
@@ -69,39 +63,39 @@ const [uploading, setUploading] = useState(false);
     [teams, selectedTeamId]
   );
 
+  const filteredTeams = useMemo(() => {
+    return teams.filter((team) => {
+      const categoryMatch =
+        teamCategoryFilter === "all" ||
+        String(team.category || "").toLowerCase() === teamCategoryFilter.toLowerCase();
+
+      const sportMatch =
+        teamSportFilter === "all" ||
+        String(team.sport || "").toLowerCase() === teamSportFilter.toLowerCase();
+
+      return categoryMatch && sportMatch;
+    });
+  }, [teams, teamCategoryFilter, teamSportFilter]);
+
   const maleTeams = useMemo(
-    () => teams.filter((team) => (team.category || "").toLowerCase() === "male"),
-    [teams]
+    () => filteredTeams.filter((team) => String(team.category || "").toLowerCase() === "male"),
+    [filteredTeams]
   );
 
   const femaleTeams = useMemo(
-    () => teams.filter((team) => (team.category || "").toLowerCase() === "female"),
-    [teams]
+    () => filteredTeams.filter((team) => String(team.category || "").toLowerCase() === "female"),
+    [filteredTeams]
   );
 
   const unidentifiedTeams = useMemo(
     () =>
       teams.filter(
-        (team) => !["male", "female"].includes((team.category || "").toLowerCase())
+        (team) => !["male", "female"].includes(String(team.category || "").toLowerCase())
       ),
     [teams]
   );
 
-  const selectableTeams = useMemo(() => {
-    return teams.filter((team) => {
-      const categoryMatch =
-        teamCategoryFilter === "all" ||
-        (team.category || "").toLowerCase() === teamCategoryFilter.toLowerCase();
-
-      const sportMatch =
-        teamSportFilter === "all" ||
-        (team.sports || []).some(
-          (sport) => sport.toLowerCase() === teamSportFilter.toLowerCase()
-        );
-
-      return categoryMatch && sportMatch;
-    });
-  }, [teams, teamCategoryFilter, teamSportFilter]);
+  const selectableTeams = useMemo(() => filteredTeams, [filteredTeams]);
 
   const handleTeamChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -112,77 +106,72 @@ const [uploading, setUploading] = useState(false);
     }));
   };
 
-  const handleTeamSportToggle = (sportName) => {
-    setTeamForm((prev) => {
-      const alreadySelected = prev.sports.includes(sportName);
 
-      return {
-        ...prev,
-        sports: alreadySelected
-          ? prev.sports.filter((item) => item !== sportName)
-          : [...prev.sports, sportName],
-      };
-    });
-  };
 
-  const uploadLogo = async (file) => {
-  if (!file) return "";
+  const handleCreateTeam = async (event) => {
+  event.preventDefault();
 
-  const fileRef = ref(
-    storage,
-    `team-logos/${Date.now()}-${file.name}`
-  );
-
-  await uploadBytes(fileRef, file);
-  const url = await getDownloadURL(fileRef);
-
-  return url;
-};
-
-  const handleCreateTeam =  async (event) => {
-    event.preventDefault();
-
-    if (!teamForm.name.trim()) return;
-    setUploading(true);
-
-  let logoUrl = teamForm.logo;
-
-  // 👇 upload if file exists
-  if (logoFile) {
-    logoUrl = await uploadLogo(logoFile);
+  if (!teamForm.department.trim() || !teamForm.sport.trim()) {
+    alert("Department and sport are required.");
+    return;
   }
 
+  const duplicateTeam = teams.find(
+    (team) =>
+      String(team.department || team.name || "").toLowerCase() ===
+        teamForm.department.trim().toLowerCase() &&
+      String(team.sport || "").toLowerCase() ===
+        teamForm.sport.trim().toLowerCase() &&
+      String(team.category || "").toLowerCase() ===
+        teamForm.category.toLowerCase()
+  );
+
+  if (duplicateTeam) {
+    alert("This squad already exists for that department, sport, and category.");
+    return;
+  }
+
+  setUploading(true);
+
+  try {
+    const logoUrl =
+      teamForm.logo.trim() ||
+      "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=300&q=80";
 
     await addTeam({
-      name: teamForm.name.trim(),
-      logo:
-        teamForm.logo ||
-        "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=300&q=80",
-      qualified: teamForm.qualified,
+      department: teamForm.department.trim(),
+      name: teamForm.department.trim(),
+      sport: teamForm.sport.trim(),
       category: teamForm.category,
-      about: teamForm.about,
+      displayName: `${teamForm.department.trim()} ${teamForm.sport.trim()} ${teamForm.category} Team`,
+      logo: logoUrl,
+      qualified: teamForm.qualified,
+      about: teamForm.about.trim(),
       coach: {
-        name: teamForm.coachName,
-        about: teamForm.coachAbout,
+        name: teamForm.coachName.trim(),
+        about: teamForm.coachAbout.trim(),
       },
-      sports: teamForm.sports,
       players: [],
     });
 
-     setUploading(false);
-  setLogoFile(null);
-
     setTeamForm({
-      name: "",
+      department: "",
+      sport: "",
       logo: "",
       about: "",
       coachName: "",
       coachAbout: "",
       qualified: true,
       category: "Male",
-      sports: [],
     });
-  };
+  } catch (error) {
+    console.error("Error adding team:", error);
+    alert("Failed to add team. Please try again.");
+  } finally {
+    setUploading(false);
+
+  }
+};
 
   const handlePlayerChange = (event) => {
     const { name, value } = event.target;
@@ -202,8 +191,6 @@ const [uploading, setUploading] = useState(false);
       cleanSheets: "",
       points: "",
       appearances: "",
-        category: "Male",
-        sports: [],
     });
     setEditingPlayerId(null);
   };
@@ -214,6 +201,7 @@ const [uploading, setUploading] = useState(false);
     if (!selectedTeam || !playerForm.name.trim()) return;
 
     if (!editingPlayerId && (selectedTeam.players?.length || 0) >= 30) {
+      alert("A team cannot have more than 30 players.");
       return;
     }
 
@@ -225,8 +213,6 @@ const [uploading, setUploading] = useState(false);
       cleanSheets: Number(playerForm.cleanSheets) || 0,
       points: Number(playerForm.points) || 0,
       appearances: Number(playerForm.appearances) || 0,
-       category: playerForm.category,
-       sports: playerForm.sports,
     };
 
     if (editingPlayerId) {
@@ -251,22 +237,20 @@ const [uploading, setUploading] = useState(false);
       cleanSheets: String(player.cleanSheets || ""),
       points: String(player.points || ""),
       appearances: String(player.appearances || ""),
-        category: player.category || "",
-    sports: player.sports || [],
     });
   };
 
   const handleStartEditTeam = (team) => {
     setEditingTeamId(team.id);
     setTeamEditForm({
-      name: team.name || "",
+      department: team.department || team.name || "",
+      sport: team.sport || "",
       logo: team.logo || "",
       about: team.about || "",
       coachName: team.coach?.name || "",
       coachAbout: team.coach?.about || "",
       qualified: !!team.qualified,
       category: team.category || "Male",
-      sports: team.sports || [],
     });
   };
 
@@ -279,29 +263,18 @@ const [uploading, setUploading] = useState(false);
     }));
   };
 
-  const handleEditSportToggle = (sportName) => {
-    setTeamEditForm((prev) => {
-      const alreadySelected = prev.sports.includes(sportName);
-
-      return {
-        ...prev,
-        sports: alreadySelected
-          ? prev.sports.filter((item) => item !== sportName)
-          : [...prev.sports, sportName],
-      };
-    });
-  };
-
   const handleSaveTeamEdit = async (event) => {
     event.preventDefault();
 
     await updateTeam(editingTeamId, {
-      name: teamEditForm.name.trim(),
+      department: teamEditForm.department.trim(),
+      name: teamEditForm.department.trim(),
+      sport: teamEditForm.sport.trim(),
+      category: teamEditForm.category,
+      displayName: `${teamEditForm.department.trim()} ${teamEditForm.sport.trim()} ${teamEditForm.category} Team`,
       logo: teamEditForm.logo,
       about: teamEditForm.about,
       qualified: teamEditForm.qualified,
-      category: teamEditForm.category,
-      sports: teamEditForm.sports,
       coach: {
         name: teamEditForm.coachName,
         about: teamEditForm.coachAbout,
@@ -329,7 +302,13 @@ const [uploading, setUploading] = useState(false);
         {list.length ? (
           list.map((team) => (
             <div className="admin-list-card" key={team.id}>
-              <h3>{team.name}</h3>
+              <h3>{team.displayName || `${team.department || team.name} ${team.sport} ${team.category}`}</h3>
+              <p>
+                <strong>Department:</strong> {team.department || team.name}
+              </p>
+              <p>
+                <strong>Sport:</strong> {team.sport || "Not assigned"}
+              </p>
               <p>
                 <strong>Category:</strong> {team.category}
               </p>
@@ -338,10 +317,6 @@ const [uploading, setUploading] = useState(false);
               </p>
               <p>
                 <strong>Coach:</strong> {team.coach?.name || "Not updated"}
-              </p>
-              <p>
-                <strong>Sports:</strong>{" "}
-                {team.sports?.length ? team.sports.join(", ") : "None assigned"}
               </p>
               <p>
                 <strong>Players:</strong> {team.players?.length || 0}
@@ -379,8 +354,8 @@ const [uploading, setUploading] = useState(false);
         <form className="admin-form" onSubmit={handleCreateTeam}>
           <div className="admin-form__grid">
             <select
-              name="name"
-              value={teamForm.name}
+              name="department"
+              value={teamForm.department}
               onChange={handleTeamChange}
               required
             >
@@ -392,11 +367,28 @@ const [uploading, setUploading] = useState(false);
               ))}
             </select>
 
-         <input
-  type="file"
-  accept="image/*"
-  onChange={(e) => setLogoFile(e.target.files[0])}
-/>
+            <select
+              name="sport"
+              value={teamForm.sport}
+              onChange={handleTeamChange}
+              required
+            >
+              <option value="">Select Sport</option>
+              {sports.map((sport) => (
+                <option key={sport.id} value={sport.name}>
+                  {sport.name}
+                </option>
+              ))}
+            </select>
+
+           <input 
+              type="text"
+              name="logo"
+              placeholder="Team logo URL"
+              value={teamForm.logo}
+              onChange={handleTeamChange}
+            />
+
             <select
               name="category"
               value={teamForm.category}
@@ -431,26 +423,6 @@ const [uploading, setUploading] = useState(false);
             />
           </div>
 
-          <div className="admin-section-card">
-            <h3>Assign Sports to Team</h3>
-            <div className="admin-checkbox-grid">
-              {sports.length ? (
-                sports.map((sport) => (
-                  <label className="remember-me" key={sport.id}>
-                    <input
-                      type="checkbox"
-                      checked={teamForm.sports.includes(sport.name)}
-                      onChange={() => handleTeamSportToggle(sport.name)}
-                    />
-                    <span>{sport.name}</span>
-                  </label>
-                ))
-              ) : (
-                <p>No sports available yet.</p>
-              )}
-            </div>
-          </div>
-
           <label className="remember-me">
             <input
               type="checkbox"
@@ -461,8 +433,8 @@ const [uploading, setUploading] = useState(false);
             <span>Qualified</span>
           </label>
 
-          <button type="submit" className="btn btn--primary">
-            Add Team
+          <button type="submit" className="btn btn--primary" disabled={uploading}>
+            {uploading ? "Uploading..." : "Add Team"}
           </button>
         </form>
       </div>
@@ -473,14 +445,33 @@ const [uploading, setUploading] = useState(false);
 
           <form className="admin-form" onSubmit={handleSaveTeamEdit}>
             <div className="admin-form__grid">
-              <input
-                type="text"
-                name="name"
-                placeholder="Team name"
-                value={teamEditForm.name}
+              <select
+                name="department"
+                value={teamEditForm.department}
                 onChange={handleTeamEditChange}
                 required
-              />
+              >
+                <option value="">Select Department</option>
+                {facultyDepartments.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                name="sport"
+                value={teamEditForm.sport}
+                onChange={handleTeamEditChange}
+                required
+              >
+                <option value="">Select Sport</option>
+                {sports.map((sport) => (
+                  <option key={sport.id} value={sport.name}>
+                    {sport.name}
+                  </option>
+                ))}
+              </select>
 
               <input
                 type="text"
@@ -522,26 +513,6 @@ const [uploading, setUploading] = useState(false);
                 onChange={handleTeamEditChange}
                 rows="3"
               />
-            </div>
-
-            <div className="admin-section-card">
-              <h3>Edit Assigned Sports</h3>
-              <div className="admin-checkbox-grid">
-                {sports.length ? (
-                  sports.map((sport) => (
-                    <label className="remember-me" key={sport.id}>
-                      <input
-                        type="checkbox"
-                        checked={teamEditForm.sports.includes(sport.name)}
-                        onChange={() => handleEditSportToggle(sport.name)}
-                      />
-                      <span>{sport.name}</span>
-                    </label>
-                  ))
-                ) : (
-                  <p>No sports available yet.</p>
-                )}
-              </div>
             </div>
 
             <label className="remember-me">
@@ -601,8 +572,7 @@ const [uploading, setUploading] = useState(false);
           <option value="">Select team</option>
           {selectableTeams.map((team) => (
             <option key={team.id} value={team.id}>
-              {team.name} ({team.category}) —{" "}
-              {team.sports?.length ? team.sports.join(", ") : "No sport assigned"}
+              {team.displayName || `${team.department || team.name} (${team.category}) — ${team.sport}`}
             </option>
           ))}
         </select>
@@ -672,37 +642,6 @@ const [uploading, setUploading] = useState(false);
                   value={playerForm.appearances}
                   onChange={handlePlayerChange}
                 />
-                 <select
-    name="category"
-    value={playerForm.category}
-    onChange={handlePlayerChange}
-  >
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-  </select>
-
-  <div className="admin-checkbox-grid">
-    {sports.map((sport) => (
-      <label className="remember-me" key={sport.id}>
-        <input
-          type="checkbox"
-          checked={playerForm.sports.includes(sport.name)}
-          onChange={() => {
-            setPlayerForm((prev) => {
-              const alreadySelected = prev.sports.includes(sport.name);
-              return {
-                ...prev,
-                sports: alreadySelected
-                  ? prev.sports.filter((s) => s !== sport.name)
-                  : [...prev.sports, sport.name],
-              };
-            });
-          }}
-        />
-        <span>{sport.name}</span>
-      </label>
-    ))}
-              </div>
               </div>
 
               <div className="admin-actions">
@@ -739,12 +678,6 @@ const [uploading, setUploading] = useState(false);
                   <p>
                     <strong>Appearances:</strong> {player.appearances || 0}
                   </p>
-                  <p>
-                    <strong>Category:</strong> {player.category || "Not assigned"}
-                  </p>
-                  <p>
-                    <strong>Sports:</strong> {player.sports?.join(", ") || "Not assigned"}
-                  </p>
 
                   <div className="admin-actions">
                     <button type="button" onClick={() => handleEditPlayer(player)}>
@@ -774,9 +707,12 @@ const [uploading, setUploading] = useState(false);
           <div className="admin-list">
             {unidentifiedTeams.map((team) => (
               <div className="admin-list-card" key={team.id}>
-                <h3>{team.name || "Unnamed Team"}</h3>
+                <h3>{team.displayName || team.name || "Unnamed Team"}</h3>
                 <p>
                   <strong>Category:</strong> {team.category || "Not assigned"}
+                </p>
+                <p>
+                  <strong>Sport:</strong> {team.sport || "Not assigned"}
                 </p>
                 <p>
                   <strong>Players:</strong> {team.players?.length || 0}

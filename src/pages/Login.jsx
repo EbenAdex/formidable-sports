@@ -43,7 +43,7 @@ function Login() {
         localStorage.removeItem("formidableRememberedEmail");
       }
 
-      navigate("/");
+      navigate("/home");
     } catch (error) {
       setErrorMessage(error.message || "Login failed.");
     }

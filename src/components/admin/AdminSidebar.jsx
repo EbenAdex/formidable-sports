@@ -82,6 +82,9 @@ function AdminSidebar({ isOpen, onClose }) {
           Manage News
         </NavLink>
 
+        <NavLink to="/admin/manage-gallery" className="admin-sidebar__link" onClick={onClose}>
+          Manage Gallery
+        </NavLink>
         <NavLink to="/admin/table" className="admin-sidebar__link" onClick={onClose}>
           Manage Table
         </NavLink>

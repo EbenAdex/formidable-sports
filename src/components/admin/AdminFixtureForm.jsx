@@ -3,7 +3,6 @@ import { useAppData } from "../../context/AppDataContext";
 
 function AdminFixtureForm({ onAddFixture }) {
   const { teams, sports } = useAppData();
-  
 
   const [formData, setFormData] = useState({
     sport: "Football",
@@ -24,87 +23,121 @@ function AdminFixtureForm({ onAddFixture }) {
     return teams.filter(
       (team) =>
         team.qualified &&
-        (team.category || "").toLowerCase() === formData.category.toLowerCase() &&
-        (team.sports || []).some(
-          (sport) => sport.toLowerCase() === formData.sport.toLowerCase()
-        )
+        String(team.sport || "").toLowerCase() ===
+          String(formData.sport || "").toLowerCase() &&
+        String(team.category || "").toLowerCase() ===
+          String(formData.category || "").toLowerCase()
     );
   }, [teams, formData.category, formData.sport]);
-  console.log("Selectable Teams:", selectableTeams);
 
-const handleChange = (event) => {
-  const { name, value } = event.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-  setFormData((prev) => ({
-    ...prev,
-    [name]: value,
-
-    ...(name === "sport" || name === "category"
-      ? { homeTeamId: "", awayTeamId: "" }
-      : {}),
-
-    // ...(name === "stage" && value !== "Group Stage"
-    //   ? { competitionGroup: "" }
-    //   : {}),
-  }));
-};
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "sport" || name === "category"
+        ? { homeTeamId: "", awayTeamId: "" }
+        : {}),
+      ...(name === "stage" && value !== "Group Stage"
+        ? { competitionGroup: "" }
+        : {}),
+    }));
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    if (!formData.homeTeamId || !formData.awayTeamId) return;
-    if (formData.stage === "Group Stage" && !formData.competitionGroup) {
-  alert("Please select a group for group stage fixtures");
-  return;
-}
-    if (String(formData.homeTeamId) === String(formData.awayTeamId)) return;
+    if (!formData.homeTeamId || !formData.awayTeamId) {
+      alert("Please select both teams.");
+      return;
+    }
+
+    if (String(formData.homeTeamId) === String(formData.awayTeamId)) {
+      alert("Home and away teams cannot be the same.");
+      return;
+    }
+
+    if (
+      formData.stage === "Group Stage" &&
+      !String(formData.competitionGroup || "").trim()
+    ) {
+      alert("Please select a group for group stage fixtures.");
+      return;
+    }
+
+    const homeTeam = teams.find(
+      (team) => String(team.id) === String(formData.homeTeamId)
+    );
+
+    const awayTeam = teams.find(
+      (team) => String(team.id) === String(formData.awayTeamId)
+    );
+
+    if (!homeTeam || !awayTeam) {
+      alert("Selected teams are invalid.");
+      return;
+    }
 
     onAddFixture({
-  ...formData,
-  homeTeamId: formData.homeTeamId,
-  awayTeamId: formData.awayTeamId,
-  postponed: false,
-  status: "Upcoming",
-  score: { home: 0, away: 0 },
-  cards: {
-    homeYellow: 0,
-    awayYellow: 0,
-    homeRed: 0,
-    awayRed: 0,
-  },
-  substitutions: {
-    home: 0,
-    away: 0,
-  },
-  lineups: {
-    homeCoach: "",
-    awayCoach: "",
-    homePlayerIds: [],
-    awayPlayerIds: [],
-  },
-  events: [],
-  timing: {
-    mode: "clock",
-    currentPeriod: 0,
-    totalPeriods: 0,
-    periodLabel: "",
-     periodDurationMinutes: Number(formData.periodDurationMinutes),
-    breakDurationMinutes: 0,
-    phase: "Pre-Match",
-    isRunning: false,
-    startedAt: null,
-    pausedAt: null,
-    currentPeriodStartedAt: null,
-    breakStartedAt: null,
-    remainingSeconds: 0,
-    homeSetsWon: 0,
-    awaySetsWon: 0,
-    sets: [],
-    currentSetNumber: 0,
-    currentSetHome: 0,
-    currentSetAway: 0,
-  },
-});
+      sport: formData.sport,
+      category: formData.category,
+      gender: formData.category,
+      stage: formData.stage,
+      competitionGroup:
+        formData.stage === "Group Stage" ? formData.competitionGroup : "",
+      homeTeamId: homeTeam.id,
+      awayTeamId: awayTeam.id,
+      homeTeam: homeTeam.department || homeTeam.name,
+      awayTeam: awayTeam.department || awayTeam.name,
+      date: formData.date,
+      kickoffTime: formData.kickoffTime,
+      endTime: formData.endTime,
+      venue: formData.venue,
+      status: "Upcoming",
+      postponed: false,
+      periodDurationMinutes: Number(formData.periodDurationMinutes) || 0,
+      score: { home: 0, away: 0 },
+      cards: {
+        homeYellow: 0,
+        awayYellow: 0,
+        homeRed: 0,
+        awayRed: 0,
+      },
+      substitutions: {
+        home: 0,
+        away: 0,
+      },
+      lineups: {
+        homeCoach: "",
+        awayCoach: "",
+        homePlayerIds: [],
+        awayPlayerIds: [],
+      },
+      events: [],
+      timing: {
+        mode: "clock",
+        currentPeriod: 0,
+        totalPeriods: 0,
+        periodLabel: "",
+        periodDurationMinutes: Number(formData.periodDurationMinutes) || 0,
+        breakDurationMinutes: 0,
+        phase: "Pre-Match",
+        isRunning: false,
+        startedAt: null,
+        pausedAt: null,
+        currentPeriodStartedAt: null,
+        breakStartedAt: null,
+        elapsedSeconds: 0,
+        remainingSeconds: 0,
+        homeSetsWon: 0,
+        awaySetsWon: 0,
+        sets: [],
+        currentSetNumber: 0,
+        currentSetHome: 0,
+        currentSetAway: 0,
+      },
+    });
 
     setFormData({
       sport: "Football",
@@ -118,6 +151,7 @@ const handleChange = (event) => {
       endTime: "",
       venue: "",
       status: "Upcoming",
+      periodDurationMinutes: "",
     });
   };
 
@@ -137,28 +171,29 @@ const handleChange = (event) => {
           <option value="Female">Female</option>
         </select>
 
-     <select name="stage" value={formData.stage} onChange={handleChange}>
-  <option value="Group Stage">Group Stage</option>
-  <option value="Quarter Final">Quarter Final</option>
-  <option value="Semi Final">Semi Final</option>
-  <option value="Final">Final</option>
-  <option value="Third Place">Third Place</option>
-</select>
+        <select name="stage" value={formData.stage} onChange={handleChange}>
+          <option value="Group Stage">Group Stage</option>
+          <option value="Quarter Final">Quarter Final</option>
+          <option value="Semi Final">Semi Final</option>
+          <option value="Final">Final</option>
+          <option value="Third Place">Third Place</option>
+        </select>
 
-       {formData.stage === "Group Stage" && (
-  <select
-    name="competitionGroup"
-    value={formData.competitionGroup}
-    onChange={handleChange}
-    required
-  >
-    <option value="">Select Group</option>
-    <option value="A">Group A</option>
-    <option value="B">Group B</option>
-    <option value="C">Group C</option>
-    <option value="D">Group D</option>
-  </select>
-)}
+        {formData.stage === "Group Stage" && (
+          <select
+            name="competitionGroup"
+            value={formData.competitionGroup}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Group</option>
+            <option value="Group A">Group A</option>
+            <option value="Group B">Group B</option>
+            <option value="Group C">Group C</option>
+            <option value="Group D">Group D</option>
+          </select>
+        )}
+
         <select
           name="homeTeamId"
           value={formData.homeTeamId}
@@ -168,7 +203,7 @@ const handleChange = (event) => {
           <option value="">Select Home Team</option>
           {selectableTeams.map((team) => (
             <option key={team.id} value={team.id}>
-              {team.name}
+              {team.displayName || `${team.department || team.name} ${team.sport} ${team.category}`}
             </option>
           ))}
         </select>
@@ -182,12 +217,10 @@ const handleChange = (event) => {
           <option value="">Select Away Team</option>
           {selectableTeams.map((team) => (
             <option key={team.id} value={team.id}>
-              {team.name}
+              {team.displayName || `${team.department || team.name} ${team.sport} ${team.category}`}
             </option>
           ))}
         </select>
-
-    
 
         <input
           type="date"
@@ -224,23 +257,20 @@ const handleChange = (event) => {
           required
         />
 
-             <input
-  type="number"
-  name="periodDurationMinutes"
-  value={formData.periodDurationMinutes}
-  onChange={handleChange}
-  placeholder="Period duration (minutes)"
-  min={1}
-  required
-/>
+        <input
+          type="number"
+          name="periodDurationMinutes"
+          value={formData.periodDurationMinutes}
+          onChange={handleChange}
+          placeholder="Period duration (minutes)"
+          min={1}
+          required
+        />
       </div>
-
 
       <button type="submit" className="btn btn--primary">
         Add Fixture
       </button>
-
-     
     </form>
   );
 }

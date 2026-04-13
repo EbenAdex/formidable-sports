@@ -1,14 +1,15 @@
+import { Link } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
-import NewsCard from "../components/sports/NewsCard";
 import { useAppData } from "../context/AppDataContext";
 
 function News() {
-  const { news } = useAppData();
+  const { news = [] } = useAppData();
 
   return (
     <>
       <Navbar />
+      <div className="navbar-spacer" />
       <main className="page-shell">
         <div className="container">
           <div className="page-header-block">
@@ -18,9 +19,24 @@ function News() {
 
           <div className="page-card">
             <div className="news-grid">
-              {news.map((item) => (
-                <NewsCard key={item.id} item={item} />
-              ))}
+              {news.length ? (
+                news.map((item) => (
+                  <Link to={`/news/${item.id}`} className="news-card" key={item.id}>
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="news-card__img"
+                    />
+                    <div className="news-card__body">
+                      <p className="news-card__meta">{item.category || "General"}</p>
+                      <h3>{item.title}</h3>
+                      <p>{item.summary || item.content || item.excerpt || "No summary available."}</p>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="empty-state">No news available yet.</p>
+              )}
             </div>
           </div>
         </div>

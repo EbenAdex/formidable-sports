@@ -5,60 +5,84 @@ import CompetitionTable from "../../components/sports/CompetitionTable";
 
 function ManageTable() {
   const {
-    table,
-    sports,
+    table = [],
+    sports = [],
     updateTableRow,
     addTableTeam,
     deleteTableTeam,
     recalculateTablesFromEndedFixtures,
   } = useAppData();
 
-  console.log(table);
-
   const [teamName, setTeamName] = useState("");
   const [selectedSport, setSelectedSport] = useState("Football");
   const [selectedCategory, setSelectedCategory] = useState("Male");
   const [selectedGroup, setSelectedGroup] = useState("Group A");
 
- const filteredTable = useMemo(() => {
-  return table.filter((row) => {
-    const sportMatch =
-      (row.sport || "").toLowerCase() === selectedSport.toLowerCase();
+  const filteredTable = useMemo(() => {
+    return table.filter((row) => {
+      const sportMatch =
+        String(row.sport || "").toLowerCase() === selectedSport.toLowerCase();
 
-    const categoryMatch =
-      (row.category || "").toLowerCase() === selectedCategory.toLowerCase();
+      const categoryMatch =
+        String(row.category || "").toLowerCase() === selectedCategory.toLowerCase();
 
-    const groupMatch = row.group
-      ? row.group.toLowerCase() === selectedGroup.toLowerCase()
-      : true; 
+      const groupMatch =
+        String(row.competitionGroup || "").toLowerCase() === selectedGroup.toLowerCase();
 
-    return sportMatch && categoryMatch && groupMatch;
-  });
-}, [table, selectedSport, selectedCategory, selectedGroup]);
+      return sportMatch && categoryMatch && groupMatch;
+    });
+  }, [table, selectedSport, selectedCategory, selectedGroup]);
 
   const sortedFilteredTable = useMemo(() => {
-    return [...filteredTable].sort((a, b) => {
-      if ((a.position ?? 0) !== (b.position ?? 0)) {
-        return (a.position ?? 0) - (b.position ?? 0);
-      }
-      return (b.points ?? 0) - (a.points ?? 0);
-    });
+    return [...filteredTable]
+      .sort((a, b) => {
+        if ((b.points ?? 0) !== (a.points ?? 0)) {
+          return (b.points ?? 0) - (a.points ?? 0);
+        }
+        if ((b.goalDifference ?? 0) !== (a.goalDifference ?? 0)) {
+          return (b.goalDifference ?? 0) - (a.goalDifference ?? 0);
+        }
+        return (b.goalsFor ?? 0) - (a.goalsFor ?? 0);
+      })
+      .map((row, index) => ({
+        ...row,
+        position: index + 1,
+      }));
   }, [filteredTable]);
 
- const handleAddTeam = async (event) => {
-  event.preventDefault();
+  const handleAddTeam = async (event) => {
+    event.preventDefault();
 
-  if (!teamName.trim()) return;
+    if (!teamName.trim()) return;
 
-  await addTableTeam(teamName.trim(), selectedSport, selectedCategory, selectedGroup);
-  setTeamName("");
-};
+    const duplicate = table.find(
+      (row) =>
+        String(row.team || "").toLowerCase() === teamName.trim().toLowerCase() &&
+        String(row.sport || "").toLowerCase() === selectedSport.toLowerCase() &&
+        String(row.category || "").toLowerCase() === selectedCategory.toLowerCase() &&
+        String(row.competitionGroup || "").toLowerCase() === selectedGroup.toLowerCase()
+    );
+
+    if (duplicate) {
+      alert("This team already exists in the selected table group.");
+      return;
+    }
+
+    await addTableTeam(
+      teamName.trim(),
+      selectedSport,
+      selectedCategory,
+      selectedGroup
+    );
+
+    setTeamName("");
+  };
 
   return (
     <AdminLayout>
       <div className="admin-section-card">
         <h2>Manage League Tables</h2>
-        <p>Select a sport and category to manage one table at a time.</p>
+        <p>Select a sport, category, and group to manage one table at a time.</p>
 
         <div className="team-search-bar">
           <select
@@ -83,17 +107,17 @@ function ManageTable() {
             <option value="Male">Male</option>
             <option value="Female">Female</option>
           </select>
-        </div>
 
-        <select
-  value={selectedGroup}
-  onChange={(e) => setSelectedGroup(e.target.value)}
->
-  <option value="Group A">Group A</option>
-  <option value="Group B">Group B</option>
-  <option value="Group C">Group C</option>
-  <option value="Group D">Group D</option>
-</select>
+          <select
+            value={selectedGroup}
+            onChange={(e) => setSelectedGroup(e.target.value)}
+          >
+            <option value="Group A">Group A</option>
+            <option value="Group B">Group B</option>
+            <option value="Group C">Group C</option>
+            <option value="Group D">Group D</option>
+          </select>
+        </div>
 
         <div className="admin-actions">
           <button type="button" onClick={recalculateTablesFromEndedFixtures}>
@@ -104,13 +128,13 @@ function ManageTable() {
 
       <div className="admin-section-card">
         <h2>
-          Add Team to {selectedSport} {selectedCategory} Table
+          Add Team to {selectedSport} {selectedCategory} {selectedGroup}
         </h2>
 
         <form className="admin-form admin-inline-form" onSubmit={handleAddTeam}>
           <input
             type="text"
-            placeholder={`New team for ${selectedSport} ${selectedCategory}`}
+            placeholder={`New team for ${selectedSport} ${selectedCategory} ${selectedGroup}`}
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
           />
@@ -123,7 +147,7 @@ function ManageTable() {
 
       <div className="admin-section-card">
         <h2>
-          {selectedSport} {selectedCategory}  Table
+          {selectedSport} {selectedCategory} {selectedGroup} Table
         </h2>
 
         <CompetitionTable

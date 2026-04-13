@@ -5,7 +5,7 @@ import { useAppData } from "../context/AppDataContext";
 
 function TeamDetails() {
   const { id } = useParams();
-  const { teams, getTeamFixtures } = useAppData();
+  const { teams = [], getTeamFixtures } = useAppData();
 
   const team = teams.find((item) => String(item.id) === String(id));
 
@@ -13,6 +13,7 @@ function TeamDetails() {
     return (
       <>
         <Navbar />
+        <div className="navbar-spacer" />
         <main className="page-shell">
           <div className="container">
             <div className="page-card">
@@ -30,33 +31,53 @@ function TeamDetails() {
   const upcoming = fixtures.filter(
     (fixture) => fixture.status === "Upcoming" && !fixture.postponed
   );
-  const live = fixtures.filter((fixture) => fixture.status === "Live");
+  const liveMatches = fixtures.filter((fixture) =>
+    ["Live", "Halftime", "Break"].includes(String(fixture.status || ""))
+  );
 
   return (
     <>
       <Navbar />
+      <div className="navbar-spacer" />
       <main className="page-shell">
         <div className="container">
           <div className="page-header-block">
-            <h1>{team.name}</h1>
+            <h1>
+              {team.displayName ||
+                `${team.department || team.name} ${team.sport || ""} ${team.category || ""} Team`}
+            </h1>
             <p className="page-intro">
               Team profile, squad details, and match history.
             </p>
           </div>
 
-          <div className="page-card ">
-            <div className="team-details ">
+          <div className="page-card">
+            <div className="team-details">
               <div className="team-details__hero">
-                <img src={team.logo} alt={team.name} className="team-details__logo" />
+                <img
+                  src={team.logo}
+                  alt={team.displayName || team.name}
+                  className="team-details__logo"
+                />
+
                 <div>
-                  <h2 style={{ color: "#fff", marginTop: 0 }}>{team.name}</h2>
-                  <p>{team.about}</p>
+                  <h2 style={{ color: "#fff", marginTop: 0 }}>
+                    {team.displayName ||
+                      `${team.department || team.name} ${team.sport || ""} ${team.category || ""} Team`}
+                  </h2>
+
+                  <p>{team.about || "No team description available yet."}</p>
+
                   <p>
-                    <strong>Category:</strong> {team.category}
+                    <strong>Department:</strong> {team.department || team.name}
                   </p>
+
                   <p>
-                    <strong>Sports:</strong>{" "}
-                    {team.sports?.length ? team.sports.join(", ") : "None"}
+                    <strong>Sport:</strong> {team.sport || "Not assigned"}
+                  </p>
+
+                  <p>
+                    <strong>Category:</strong> {team.category || "Not assigned"}
                   </p>
                 </div>
               </div>
@@ -77,7 +98,7 @@ function TeamDetails() {
                     <strong>Upcoming:</strong> {upcoming.length}
                   </p>
                   <p>
-                    <strong>Live:</strong> {live.length}
+                    <strong>Live:</strong> {liveMatches.length}
                   </p>
                 </div>
 
@@ -88,11 +109,12 @@ function TeamDetails() {
                       {fixtures.map((fixture) => (
                         <div className="search-list__item" key={fixture.id}>
                           <strong>
-                            {fixture.homeTeam} {fixture.score?.home ?? 0} -{" "}
-                            {fixture.score?.away ?? 0} {fixture.awayTeam}
+                            {fixture.homeTeam || "Home"} {fixture.score?.home ?? 0} -{" "}
+                            {fixture.score?.away ?? 0} {fixture.awayTeam || "Away"}
                           </strong>
                           <p>
-                            {fixture.date} • {fixture.sport} • {fixture.status}
+                            {fixture.date || "No date"} • {fixture.sport || "Sport"} •{" "}
+                            {fixture.status || "Unknown"}
                           </p>
                         </div>
                       ))}
@@ -116,22 +138,30 @@ function TeamDetails() {
                     className="player-card"
                     key={player.id}
                   >
-                    <h3 className="player-card__name">{player.name || "Unnamed Player"}</h3>
+                    <h3 className="player-card__name">
+                      {player.name || "Unnamed Player"}
+                    </h3>
+
                     <p>
-                      <strong>Position:</strong> {player.position}
+                      <strong>Position:</strong> {player.position || "Not assigned"}
                     </p>
+
                     <p>
-                      <strong>Jersey:</strong> {player.jerseyNumber}
+                      <strong>Jersey:</strong> {player.jerseyNumber || 0}
                     </p>
+
                     <p>
                       <strong>Appearances:</strong> {player.appearances || 0}
                     </p>
+
                     <p>
                       <strong>Goals:</strong> {player.goals || 0}
                     </p>
+
                     <p>
                       <strong>Clean Sheets:</strong> {player.cleanSheets || 0}
                     </p>
+
                     <p>
                       <strong>Points:</strong> {player.points || 0}
                     </p>

@@ -3,10 +3,14 @@ import AdminNewsForm from "../../components/admin/AdminNewsForm";
 import { useAppData } from "../../context/AppDataContext";
 
 function ManageNews() {
-  const { news, addNews, deleteNews } = useAppData();
+  const { news = [], addNews, deleteNews } = useAppData();
 
-  const handleAddNews = (newNews) => {
-    addNews(newNews);
+  const handleAddNews = async (newNews) => {
+    await addNews({
+      ...newNews,
+      summary: newNews.summary || "",
+      content: newNews.content || newNews.summary || "",
+    });
   };
 
   return (
@@ -21,21 +25,32 @@ function ManageNews() {
         <h2>News List</h2>
 
         <div className="admin-list">
-          {news.map((item) => (
-            <div className="admin-list-card" key={item.id}>
-              <h3>{item.title}</h3>
-              <p>
-                <strong>Category:</strong> {item.category}
-              </p>
-              <p>{item.excerpt}</p>
+          {news.length ? (
+            news.map((item) => (
+              <div className="admin-list-card" key={item.id}>
+                <h3>{item.title || "Untitled News"}</h3>
+                <p>
+                  <strong>Category:</strong> {item.category || "General"}
+                </p>
+                <p>{item.summary || item.content || item.excerpt || "No summary available."}</p>
 
-              <div className="admin-actions">
-                <button type="button" onClick={() => deleteNews(item.id)}>
-                  Delete
-                </button>
+                <div className="admin-actions">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const confirmed = window.confirm(`Delete news: ${item.title}?`);
+                      if (!confirmed) return;
+                      await deleteNews(item.id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p>No news available yet.</p>
+          )}
         </div>
       </div>
     </AdminLayout>

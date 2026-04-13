@@ -26,35 +26,35 @@ function CompetitionTable({
 
         <tbody>
           {rows.length ? (
-            rows.map((team) => (
-              <tr key={team.id}>
+            rows.map((team, index) => (
+              <tr key={team.id || `${team.team}-${index}`}>
                 <td>
                   {editable ? (
                     <input
                       type="number"
-                      value={team.position}
+                      value={team.position ?? index + 1}
                       onChange={(e) =>
                         onFieldChange?.(team.id, "position", e.target.value)
                       }
                     />
                   ) : (
-                    team.position
+                    team.position ?? index + 1
                   )}
                 </td>
 
-                <td>{team.team}</td>
+                <td>{team.team || "Unknown Team"}</td>
 
                 <td>
                   {editable ? (
                     <input
                       type="number"
-                      value={team.played}
+                      value={team.played ?? 0}
                       onChange={(e) =>
                         onFieldChange?.(team.id, "played", e.target.value)
                       }
                     />
                   ) : (
-                    team.played
+                    team.played ?? 0
                   )}
                 </td>
 
@@ -62,13 +62,13 @@ function CompetitionTable({
                   {editable ? (
                     <input
                       type="number"
-                      value={team.won}
+                      value={team.won ?? 0}
                       onChange={(e) =>
                         onFieldChange?.(team.id, "won", e.target.value)
                       }
                     />
                   ) : (
-                    team.won
+                    team.won ?? 0
                   )}
                 </td>
 
@@ -76,13 +76,13 @@ function CompetitionTable({
                   {editable ? (
                     <input
                       type="number"
-                      value={team.drawn}
+                      value={team.drawn ?? 0}
                       onChange={(e) =>
                         onFieldChange?.(team.id, "drawn", e.target.value)
                       }
                     />
                   ) : (
-                    team.drawn
+                    team.drawn ?? 0
                   )}
                 </td>
 
@@ -90,13 +90,13 @@ function CompetitionTable({
                   {editable ? (
                     <input
                       type="number"
-                      value={team.lost}
+                      value={team.lost ?? 0}
                       onChange={(e) =>
                         onFieldChange?.(team.id, "lost", e.target.value)
                       }
                     />
                   ) : (
-                    team.lost
+                    team.lost ?? 0
                   )}
                 </td>
 
@@ -104,13 +104,13 @@ function CompetitionTable({
                   {editable ? (
                     <input
                       type="number"
-                      value={team.goalsFor}
+                      value={team.goalsFor ?? 0}
                       onChange={(e) =>
                         onFieldChange?.(team.id, "goalsFor", e.target.value)
                       }
                     />
                   ) : (
-                    team.goalsFor
+                    team.goalsFor ?? 0
                   )}
                 </td>
 
@@ -118,13 +118,13 @@ function CompetitionTable({
                   {editable ? (
                     <input
                       type="number"
-                      value={team.goalsAgainst}
+                      value={team.goalsAgainst ?? 0}
                       onChange={(e) =>
                         onFieldChange?.(team.id, "goalsAgainst", e.target.value)
                       }
                     />
                   ) : (
-                    team.goalsAgainst
+                    team.goalsAgainst ?? 0
                   )}
                 </td>
 
@@ -132,13 +132,13 @@ function CompetitionTable({
                   {editable ? (
                     <input
                       type="number"
-                      value={team.goalDifference}
+                      value={team.goalDifference ?? 0}
                       onChange={(e) =>
                         onFieldChange?.(team.id, "goalDifference", e.target.value)
                       }
                     />
                   ) : (
-                    team.goalDifference
+                    team.goalDifference ?? 0
                   )}
                 </td>
 
@@ -146,13 +146,13 @@ function CompetitionTable({
                   {editable ? (
                     <input
                       type="number"
-                      value={team.points}
+                      value={team.points ?? 0}
                       onChange={(e) =>
                         onFieldChange?.(team.id, "points", e.target.value)
                       }
                     />
                   ) : (
-                    team.points
+                    team.points ?? 0
                   )}
                 </td>
 

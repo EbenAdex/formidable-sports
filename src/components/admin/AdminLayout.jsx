@@ -38,6 +38,8 @@ function AdminLayout({ children }) {
     <>
       <Navbar />
 
+      <div className="navbar-spacer" />
+
       {/* Toggle button (mobile only via CSS) */}
       <button
         className="admin-sidebar__toggle"
