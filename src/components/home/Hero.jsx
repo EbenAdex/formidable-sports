@@ -6,7 +6,7 @@ function Hero() {
     <section className="hero">
       <div className="container hero__content">
         <p className="hero__tag">Faculty Sports Platform</p>
-        <h1 className="hero__title">Welcome to Formidable Sports</h1>
+        <h1 className="hero__title">Welcome to ARTLYMPICS 6.0</h1>
         <p className="hero__text">
           Follow faculty competitions, check live fixtures, view results, track
           team progress, and stay updated with the latest sports news.
