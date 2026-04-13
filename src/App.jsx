@@ -1,7 +1,12 @@
 import AppRoutes from "./routes/AppRoutes";
 import "./firebase"; // Initialize Firebase
 function App() {
-  return <AppRoutes />;
+  return (
+    <>
+      <AppRoutes />
+      
+    </>
+  );
 }
 
 export default App;
