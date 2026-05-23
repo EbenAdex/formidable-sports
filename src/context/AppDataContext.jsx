@@ -390,6 +390,7 @@ export function AppDataProvider({ children }) {
 
     const updatedFixture = callback(currentFixture);
     await updateFixtureInFirestore(id, updatedFixture);
+    await recalculateAllPlayerStats();
     return updatedFixture;
   };
 
@@ -721,126 +722,40 @@ const getSortedTable = (
     return count >= 25 && count <= 30;
   };
 
-  const recalculateAllPlayerStats = () => {
-    setTeams((prevTeams) => {
-      const nextTeams = prevTeams.map((team) => ({
-        ...team,
-        players: (team.players || []).map((player) => ({
+ const recalculateAllPlayerStats = async () => {
+  const statsMap = recalculatePlayerStats(
+    fixtures,
+    teams
+  );
+
+  for (const team of teams) {
+    const updatedPlayers = (team.players || []).map(
+      (player) => {
+        const stats =
+          statsMap[player.id] || {};
+
+        return {
           ...player,
-          goals: 0,
-          cleanSheets: 0,
-          appearances: 0,
-          points: 0,
-        })),
-      }));
+          goals: stats.goals || 0,
+          assists: stats.assists || 0,
+          yellowCards:
+            stats.yellowCards || 0,
+          redCards:
+            stats.redCards || 0,
+          cleanSheets:
+            stats.cleanSheets || 0,
+          appearances:
+            stats.appearances || 0,
+          points: stats.points || 0,
+        };
+      }
+    );
 
-      const fixturesForStats = fixtures.filter((fixture) =>
-        ["Ended", "Live"].includes(fixture.status)
-      );
-
-      fixturesForStats.forEach((fixture) => {
-        const homeTeam = nextTeams.find((team) => String(team.id) === String(fixture.homeTeamId));
-        const awayTeam = nextTeams.find((team) => String(team.id) === String(fixture.awayTeamId));
-
-        const homeAppearanceIds = new Set([
-          ...ensureArray(fixture.lineups?.homePlayerIds),
-          ...ensureArray(fixture.events)
-            .filter((event) => event.type === "Substitution" && event.teamSide === "home")
-            .map((event) => event.playerInId)
-            .filter(Boolean),
-        ]);
-
-        const awayAppearanceIds = new Set([
-          ...ensureArray(fixture.lineups?.awayPlayerIds),
-          ...ensureArray(fixture.events)
-            .filter((event) => event.type === "Substitution" && event.teamSide === "away")
-            .map((event) => event.playerInId)
-            .filter(Boolean),
-        ]);
-
-        if (homeTeam) {
-          homeTeam.players = (homeTeam.players || []).map((player) =>
-            homeAppearanceIds.has(player.id)
-              ? { ...player, appearances: (player.appearances || 0) + 1 }
-              : player
-          );
-        }
-
-        if (awayTeam) {
-          awayTeam.players = (awayTeam.players || []).map((player) =>
-            awayAppearanceIds.has(player.id)
-              ? { ...player, appearances: (player.appearances || 0) + 1 }
-              : player
-          );
-        }
-
-        ensureArray(fixture.events).forEach((event) => {
-          const currentTeam = event.teamSide === "home" ? homeTeam : awayTeam;
-          if (!currentTeam || !event.playerId) return;
-
-          currentTeam.players = (currentTeam.players || []).map((player) => {
-            if (String(player.id) !== String(event.playerId)) return player;
-
-            if (normalizeText(fixture.sport) === "football" && event.type === "Goal") {
-              return { ...player, goals: (player.goals || 0) + 1 };
-            }
-
-            if (
-              ["basketball", "volleyball", "table tennis", "tennis"].includes(
-                normalizeText(fixture.sport)
-              ) &&
-              event.type === "Score"
-            ) {
-              return {
-                ...player,
-                points: (player.points || 0) + (Number(event.pointsValue) || 1),
-              };
-            }
-
-            return player;
-          });
-        });
-
-        if (fixture.status === "Ended" && normalizeText(fixture.sport) === "football") {
-          if ((fixture.score?.away ?? 0) === 0 && homeTeam) {
-            const validHomeKeepers = (homeTeam.players || []).filter(
-              (player) =>
-                normalizeText(player.position) === "goalkeeper" &&
-                homeAppearanceIds.has(player.id)
-            );
-
-            if (validHomeKeepers.length) {
-              const keeperIds = new Set(validHomeKeepers.map((player) => player.id));
-              homeTeam.players = (homeTeam.players || []).map((player) =>
-                keeperIds.has(player.id)
-                  ? { ...player, cleanSheets: (player.cleanSheets || 0) + 1 }
-                  : player
-              );
-            }
-          }
-
-          if ((fixture.score?.home ?? 0) === 0 && awayTeam) {
-            const validAwayKeepers = (awayTeam.players || []).filter(
-              (player) =>
-                normalizeText(player.position) === "goalkeeper" &&
-                awayAppearanceIds.has(player.id)
-            );
-
-            if (validAwayKeepers.length) {
-              const keeperIds = new Set(validAwayKeepers.map((player) => player.id));
-              awayTeam.players = (awayTeam.players || []).map((player) =>
-                keeperIds.has(player.id)
-                  ? { ...player, cleanSheets: (player.cleanSheets || 0) + 1 }
-                  : player
-              );
-            }
-          }
-        }
-      });
-
-      return nextTeams;
+    await updateTeamInFirestore(team.id, {
+      players: updatedPlayers,
     });
-  };
+  }
+};
 
   const getTeamFixtures = (teamId) =>
     fixtures.filter(
