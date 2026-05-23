@@ -10,6 +10,7 @@ function ManageMedals() {
     updateRanking,
     deleteRanking,
   } = useAppData();
+  
 
   const [form, setForm] = useState({
     teamId: "",
