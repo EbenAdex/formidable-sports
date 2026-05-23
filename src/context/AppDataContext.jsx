@@ -231,6 +231,8 @@ export function AppDataProvider({ children }) {
     localStorage.setItem(FAVOURITES_KEY, JSON.stringify(favourites));
   }, [favourites]);
 
+
+
   const getSportRuleBySport = (sportName) => {
     return sportRules.find(
       (rule) => normalizeText(rule?.sport) === normalizeText(sportName)

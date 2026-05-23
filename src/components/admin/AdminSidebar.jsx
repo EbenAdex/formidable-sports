@@ -93,6 +93,10 @@ function AdminSidebar({ isOpen, onClose }) {
           Manage Rankings
         </NavLink>
 
+        <NavLink to="/admin/medals" className="admin-sidebar__link" onClick={onClose}>
+           Manage Medals
+        </NavLink>
+
         <NavLink to="/admin/teams" className="admin-sidebar__link" onClick={onClose}>
           Manage Teams
         </NavLink>

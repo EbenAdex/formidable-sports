@@ -9,13 +9,6 @@ import page05 from "../assets/fasa/page-05.jpeg";
 import page06 from "../assets/fasa/page-06.jpeg";
 import page07 from "../assets/fasa/page-07.jpeg";
 import page08 from "../assets/fasa/page-08.jpeg";
-import page09 from "../assets/fasa/page-09.jpeg";
-import page10 from "../assets/fasa/page-10.jpeg";
-import page11 from "../assets/fasa/page-11.jpeg";
-import page12 from "../assets/fasa/page-12.jpeg";
-import page13 from "../assets/fasa/page-13.jpeg";
-import page14 from "../assets/fasa/page-14.jpeg";
-import page15 from "../assets/fasa/page-15.jpeg";
 
 const pageSections = [
   {
@@ -60,54 +53,7 @@ const pageSections = [
     text: "This page reflects the sporting culture, competitive spirit, and energy that surround faculty activities such as Artlympics.",
     image: page07,
   },
-  {
-    id: 8,
-    title: "Creative and Social Culture",
-    text: "This section shows the cultural and social side of FASA, balancing academics with expression, fun, and community.",
-    image: page08,
-  },
-  {
-    id: 9,
-    title: "Participation and Representation",
-    text: "This part reinforces how FASA gives students a visible platform for involvement, representation, and collective identity.",
-    image: page09,
-  },
-  {
-    id: 10,
-    title: "Impact and Reach",
-    text: "This section emphasizes influence, audience engagement, and the broader significance of FASA within campus life.",
-    image: page10,
-  },
-  {
-    id: 11,
-    title: "Engagement Structure",
-    text: "This page can serve as a visual section for structure, planning, or organized student interaction within the association.",
-    image: page11,
-  },
-  {
-    id: 12,
-    title: "Momentum and Visibility",
-    text: "This part continues the story of student visibility, event presentation, and the overall public image of FASA.",
-    image: page12,
-  },
-  {
-    id: 13,
-    title: "Faculty Energy",
-    text: "This section captures the dynamic side of the faculty and the energy that comes with coordinated student activities.",
-    image: page13,
-  },
-  {
-    id: 14,
-    title: "Recognition and Value",
-    text: "This page helps communicate the value, prestige, and recognition associated with the faculty and its student body.",
-    image: page14,
-  },
-  {
-    id: 15,
-    title: "Closing Showcase",
-    text: "The final section serves as a closing visual summary of the faculty’s identity, culture, and student experience.",
-    image: page15,
-  },
+
 ];
 
 function AboutFasa() {
@@ -119,7 +65,7 @@ function AboutFasa() {
       <main className="page-shell">
         <div className="container">
           <div className="page-header-block">
-            <h1>About FASA</h1>
+            <h1>About</h1>
             <p className="page-intro">
               Explore the identity, culture, energy, and student experience of the
               Faculty of Arts Students’ Association, University of Lagos.

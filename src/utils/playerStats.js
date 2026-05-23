@@ -29,3 +29,31 @@ export function getTopPoints(players = [], limit = 10) {
     .sort((a, b) => (b.points || 0) - (a.points || 0))
     .slice(0, limit);
 }
+
+
+export function recalculatePlayerStats(fixtures, teams) {
+  const playersMap = {};
+
+  fixtures.forEach((fixture) => {
+    if (fixture.status !== "Ended") return;
+
+    const events = fixture.events || [];
+
+    events.forEach((event) => {
+      const { playerId, type } = event;
+
+      if (!playersMap[playerId]) {
+        playersMap[playerId] = {
+          goals: 0,
+          cleanSheets: 0,
+          points: 0,
+        };
+      }
+
+      if (type === "goal") playersMap[playerId].goals += 1;
+      if (type === "clean_sheet") playersMap[playerId].cleanSheets += 1;
+    });
+  });
+
+  return playersMap;
+}

@@ -1,7 +1,7 @@
 const faqData = [
   {
     id: 1,
-    question: "How do I register on Formidable Sports?",
+    question: "How do I register on ARTLYMPICS?",
     answer:
       "Use the Register option under Profile, fill in your required details correctly, and submit the form to create your account.",
   },

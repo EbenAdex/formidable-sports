@@ -32,33 +32,31 @@ function LiveMatchControl() {
   });
 
   useEffect(() => {
-    if (queryMatchId) {
-      setSelectedMatchId(queryMatchId);
-    }
+    if (queryMatchId) setSelectedMatchId(queryMatchId);
   }, [queryMatchId]);
 
   useEffect(() => {
     if (!selectedMatchId && fixtures.length) {
-      const liveMatch =
-        fixtures.find((match) => match.status === "Live") ||
-        fixtures.find((match) => match.status === "Halftime") ||
-        fixtures.find((match) => match.status === "Break") ||
+      const preferred =
+        fixtures.find((m) => m.status === "Live") ||
+        fixtures.find((m) => m.status === "Halftime") ||
+        fixtures.find((m) => m.status === "Break") ||
         fixtures[0];
-
-      if (liveMatch) {
-        setSelectedMatchId(liveMatch.id);
-      }
+      if (preferred) setSelectedMatchId(preferred.id);
     }
   }, [fixtures, selectedMatchId]);
 
-  const selectedMatch = useMemo(() => {
-    return fixtures.find((match) => String(match.id) === String(selectedMatchId));
-  }, [fixtures, selectedMatchId]);
+  const selectedMatch = useMemo(
+    () => fixtures.find((m) => String(m.id) === String(selectedMatchId)),
+    [fixtures, selectedMatchId]
+  );
 
-  const rule = useMemo(() => {
-    if (!selectedMatch) return null;
-    return getSportRuleBySport(selectedMatch.sport);
-  }, [selectedMatch, getSportRuleBySport]);
+  const rule = useMemo(
+    () => (selectedMatch ? getSportRuleBySport(selectedMatch.sport) : null),
+    [selectedMatch, getSportRuleBySport]
+  );
+
+  const timing = selectedMatch?.timing || {};
 
   const normalizeSport = (sport) => String(sport || "").trim().toLowerCase();
 
@@ -69,60 +67,55 @@ function LiveMatchControl() {
       : getTeamById(selectedMatch.awayTeamId);
   }, [selectedMatch, eventForm.teamSide, getTeamById]);
 
-  const timing = selectedMatch?.timing || {};
-  const [derivedRemainingSeconds, setDerivedRemainingSeconds] = useState(
-    Number(timing.remainingSeconds || 0)
-  );
+  const [derivedRemainingSeconds, setDerivedRemainingSeconds] = useState(0);
 
   useEffect(() => {
-    if (!selectedMatch || !rule || rule.mode !== "clock") return;
+    if (!selectedMatch || !rule || rule.mode !== "clock") {
+      setDerivedRemainingSeconds(0);
+      return;
+    }
 
-    let intervalId;
-
-    const computeRemaining = () => {
-      const currentTiming = selectedMatch?.timing || {};
-
-      if (!currentTiming.isRunning || !currentTiming.currentPeriodStartedAt) {
-        return Number(currentTiming.remainingSeconds || 0);
+    const compute = () => {
+      const t = selectedMatch.timing || {};
+      if (!t.isRunning || !t.currentPeriodStartedAt) {
+        return Number(t.remainingSeconds || 0);
       }
-
-      const startedAt = new Date(currentTiming.currentPeriodStartedAt).getTime();
-      const now = Date.now();
-      const elapsed = Math.floor((now - startedAt) / 1000);
-      const total =
-        Number(currentTiming.periodDurationMinutes || rule.minutesPerPeriod || 0) * 60;
-
+      const elapsed = Math.floor(
+        (Date.now() - new Date(t.currentPeriodStartedAt).getTime()) / 1000
+      );
+      const total = Number(t.periodDurationMinutes || rule.minutesPerPeriod || 30) * 60;
       return Math.max(total - elapsed, 0);
     };
 
-    setDerivedRemainingSeconds(computeRemaining());
+    setDerivedRemainingSeconds(compute());
 
     if (timing.isRunning) {
-      intervalId = setInterval(() => {
-        setDerivedRemainingSeconds(computeRemaining());
-      }, 1000);
+      const id = setInterval(() => setDerivedRemainingSeconds(compute()), 1000);
+      return () => clearInterval(id);
     }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
   }, [
     selectedMatch?.id,
     selectedMatch?.timing?.isRunning,
     selectedMatch?.timing?.currentPeriodStartedAt,
     selectedMatch?.timing?.remainingSeconds,
     rule,
-    timing.isRunning,
   ]);
 
-  const handleEventChange = (event) => {
-    const { name, value } = event.target;
+  const formatSeconds = (s) => {
+    const m = Math.floor(Number(s || 0) / 60);
+    const sec = Number(s || 0) % 60;
+    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
 
-    setEventForm((prev) => ({
-      ...prev,
-      [name]: value,
-      ...(name === "teamSide" ? { playerId: "", playerInId: "", playerOutId: "" } : {}),
-    }));
+  const statusClass = (status) => {
+    const map = {
+      Live: "sb-status--live",
+      Halftime: "sb-status--halftime",
+      Break: "sb-status--halftime",
+      Ended: "sb-status--ended",
+      Upcoming: "sb-status--upcoming",
+    };
+    return map[status] || "";
   };
 
   const resetEventForm = () => {
@@ -140,72 +133,63 @@ function LiveMatchControl() {
   };
 
   const recalculateMatchFromEvents = (match, events) => {
-    const nextMatch = {
+    const next = {
       ...match,
       score: { home: 0, away: 0 },
-      cards: {
-        homeYellow: 0,
-        awayYellow: 0,
-        homeRed: 0,
-        awayRed: 0,
-      },
-      substitutions: {
-        home: 0,
-        away: 0,
-      },
+      cards: { homeYellow: 0, awayYellow: 0, homeRed: 0, awayRed: 0 },
+      substitutions: { home: 0, away: 0 },
       events,
     };
 
     events.forEach((item) => {
       if (normalizeSport(match.sport) === "football" && item.type === "Goal") {
-        nextMatch.score[item.teamSide] += 1;
+        next.score[item.teamSide] += 1;
       }
-
       if (
         ["basketball", "volleyball", "table tennis", "tennis"].includes(
           normalizeSport(match.sport)
         ) &&
         item.type === "Score"
       ) {
-        nextMatch.score[item.teamSide] += Number(item.pointsValue || 1);
+        next.score[item.teamSide] += Number(item.pointsValue || 1);
       }
-
-      if (item.type === "Yellow Card") {
-        const key = item.teamSide === "home" ? "homeYellow" : "awayYellow";
-        nextMatch.cards[key] += 1;
-      }
-
-      if (item.type === "Red Card") {
-        const key = item.teamSide === "home" ? "homeRed" : "awayRed";
-        nextMatch.cards[key] += 1;
-      }
-
-      if (item.type === "Substitution") {
-        nextMatch.substitutions[item.teamSide] += 1;
-      }
+      if (item.type === "Yellow Card")
+        next.cards[item.teamSide === "home" ? "homeYellow" : "awayYellow"] += 1;
+      if (item.type === "Red Card")
+        next.cards[item.teamSide === "home" ? "homeRed" : "awayRed"] += 1;
+      if (item.type === "Substitution") next.substitutions[item.teamSide] += 1;
     });
 
-    return nextMatch;
+    return next;
   };
 
-  const handleAddOrUpdateEvent = async (event) => {
-    event.preventDefault();
+  const handleEventChange = (e) => {
+    const { name, value } = e.target;
+    setEventForm((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "teamSide" ? { playerId: "", playerInId: "", playerOutId: "" } : {}),
+    }));
+  };
 
+  const handleAddOrUpdateEvent = async (e) => {
+    e.preventDefault();
     if (!selectedMatch) return;
 
-    const needsSinglePlayer =
+    const needsPlayer =
       eventForm.type !== "Substitution" &&
       ["Goal", "Yellow Card", "Red Card", "Score"].includes(eventForm.type);
 
     if (!eventForm.minute) return;
-    if (needsSinglePlayer && !eventForm.playerId) return;
-    if (eventForm.type === "Substitution" && (!eventForm.playerInId || !eventForm.playerOutId)) {
+    if (needsPlayer && !eventForm.playerId) return;
+    if (
+      eventForm.type === "Substitution" &&
+      (!eventForm.playerInId || !eventForm.playerOutId)
+    )
       return;
-    }
 
     await updateFixtureWithCallback(selectedMatch.id, (match) => {
       let nextEvents = [...(match.events || [])];
-
       const payload = {
         id: editingEventId || Date.now(),
         minute: eventForm.minute,
@@ -233,52 +217,46 @@ function LiveMatchControl() {
     await recalculateAllPlayerStats();
   };
 
-  const handleEditEvent = (eventItem) => {
-    setEditingEventId(eventItem.id);
+  const handleEditEvent = (item) => {
+    setEditingEventId(item.id);
     setEventForm({
-      minute: eventItem.minute || "",
-      type: eventItem.type || "Goal",
-      teamSide: eventItem.teamSide || "home",
-      playerId: eventItem.playerId ? String(eventItem.playerId) : "",
-      playerInId: eventItem.playerInId ? String(eventItem.playerInId) : "",
-      playerOutId: eventItem.playerOutId ? String(eventItem.playerOutId) : "",
-      pointsValue: String(eventItem.pointsValue || 1),
-      note: eventItem.note || "",
+      minute: item.minute || "",
+      type: item.type || "Goal",
+      teamSide: item.teamSide || "home",
+      playerId: item.playerId ? String(item.playerId) : "",
+      playerInId: item.playerInId ? String(item.playerInId) : "",
+      playerOutId: item.playerOutId ? String(item.playerOutId) : "",
+      pointsValue: String(item.pointsValue || 1),
+      note: item.note || "",
     });
   };
 
   const handleDeleteEvent = async (eventId) => {
     if (!selectedMatch) return;
-
     await updateFixtureWithCallback(selectedMatch.id, (match) => {
-      const nextEvents = (match.events || []).filter((item) => String(item.id) !== String(eventId));
+      const nextEvents = (match.events || []).filter(
+        (item) => String(item.id) !== String(eventId)
+      );
       return recalculateMatchFromEvents(match, nextEvents);
     });
-
-    if (String(editingEventId) === String(eventId)) {
-      resetEventForm();
-    }
-
+    if (String(editingEventId) === String(eventId)) resetEventForm();
     await recalculateAllPlayerStats();
   };
 
   const resolvePlayerName = (playerId, side) => {
-    if (!selectedMatch || !playerId) return "Unknown Player";
-
+    if (!selectedMatch || !playerId) return "Unknown";
     const team =
       side === "home"
         ? getTeamById(selectedMatch.homeTeamId)
         : getTeamById(selectedMatch.awayTeamId);
-
     return (
-      team?.players?.find((player) => String(player.id) === String(playerId))?.name ||
-      "Unknown Player"
+      team?.players?.find((p) => String(p.id) === String(playerId))?.name ||
+      "Unknown"
     );
   };
 
   const handleStartClockMatch = async () => {
     if (!selectedMatch || !rule) return;
-
     const minutes =
       Number(selectedMatch.periodDurationMinutes) ||
       Number(selectedMatch.timing?.periodDurationMinutes) ||
@@ -309,23 +287,19 @@ function LiveMatchControl() {
 
   const handlePauseClock = async () => {
     if (!selectedMatch) return;
-
     await updateFixtureWithCallback(selectedMatch.id, (match) => {
-      const current = match.timing || {};
-      let remaining = Number(current.remainingSeconds || 0);
-
-      if (current.isRunning && current.currentPeriodStartedAt) {
-        const startedAt = new Date(current.currentPeriodStartedAt).getTime();
-        const now = Date.now();
-        const elapsed = Math.floor((now - startedAt) / 1000);
-        const total = Number(current.periodDurationMinutes || 30) * 60;
-        remaining = Math.max(total - elapsed, 0);
+      const t = match.timing || {};
+      let remaining = Number(t.remainingSeconds || 0);
+      if (t.isRunning && t.currentPeriodStartedAt) {
+        const elapsed = Math.floor(
+          (Date.now() - new Date(t.currentPeriodStartedAt).getTime()) / 1000
+        );
+        remaining = Math.max(Number(t.periodDurationMinutes || 30) * 60 - elapsed, 0);
       }
-
       return {
         ...match,
         timing: {
-          ...current,
+          ...t,
           isRunning: false,
           phase: "Paused",
           remainingSeconds: remaining,
@@ -337,12 +311,10 @@ function LiveMatchControl() {
 
   const handleResumeClock = async () => {
     if (!selectedMatch) return;
-
     const remaining = Number(timing.remainingSeconds || 0);
-    const totalPeriodSeconds = Number(timing.periodDurationMinutes || 30) * 60;
-
+    const total = Number(timing.periodDurationMinutes || 30) * 60;
     const currentPeriodStartedAt = new Date(
-      Date.now() - (totalPeriodSeconds - remaining) * 1000
+      Date.now() - (total - remaining) * 1000
     ).toISOString();
 
     await updateFixtureWithCallback(selectedMatch.id, (match) => ({
@@ -362,7 +334,6 @@ function LiveMatchControl() {
 
   const handleEndFirstHalf = async () => {
     if (!selectedMatch) return;
-
     await updateFixtureWithCallback(selectedMatch.id, (match) => ({
       ...match,
       status: "Halftime",
@@ -379,7 +350,6 @@ function LiveMatchControl() {
 
   const handleStartSecondHalf = async () => {
     if (!selectedMatch || !rule) return;
-
     const minutes =
       Number(selectedMatch.periodDurationMinutes) ||
       Number(selectedMatch.timing?.periodDurationMinutes) ||
@@ -407,8 +377,7 @@ function LiveMatchControl() {
 
   const handleEndMatch = async () => {
     if (!selectedMatch) return;
-
-    const updatedFixture = await updateFixtureWithCallback(selectedMatch.id, (match) => ({
+    const updated = await updateFixtureWithCallback(selectedMatch.id, (match) => ({
       ...match,
       status: "Ended",
       timing: {
@@ -418,17 +387,14 @@ function LiveMatchControl() {
         remainingSeconds: 0,
       },
     }));
-
-    if (!updatedFixture) return;
-
+    if (!updated) return;
     await recalculateAllPlayerStats();
-    await syncSingleResultFromFixture(updatedFixture);
+    await syncSingleResultFromFixture(updated);
     await recalculateTablesFromEndedFixtures();
   };
 
   const handleStartSetMatch = async () => {
     if (!selectedMatch || !rule) return;
-
     await updateFixtureWithCallback(selectedMatch.id, (match) => ({
       ...match,
       status: "Live",
@@ -438,8 +404,6 @@ function LiveMatchControl() {
         mode: "sets",
         currentSetNumber: 1,
         totalSetsToWin: Number(rule.setsToWin || 2),
-        setTargets: rule.setTargets || [],
-        winByTwo: !!rule.winByTwo,
         homeSetsWon: 0,
         awaySetsWon: 0,
         currentSetHome: 0,
@@ -451,20 +415,22 @@ function LiveMatchControl() {
     }));
   };
 
-  const handleUpdateCurrentSetScore = async (teamSide, delta) => {
+  const handleUpdateCurrentSetScore = async (side, delta) => {
     if (!selectedMatch) return;
-
     await updateFixtureWithCallback(selectedMatch.id, (match) => {
-      const current = match.timing || {};
-      const home = Number(current.currentSetHome || 0);
-      const away = Number(current.currentSetAway || 0);
-
+      const t = match.timing || {};
       return {
         ...match,
         timing: {
-          ...current,
-          currentSetHome: teamSide === "home" ? Math.max(0, home + delta) : home,
-          currentSetAway: teamSide === "away" ? Math.max(0, away + delta) : away,
+          ...t,
+          currentSetHome:
+            side === "home"
+              ? Math.max(0, Number(t.currentSetHome || 0) + delta)
+              : Number(t.currentSetHome || 0),
+          currentSetAway:
+            side === "away"
+              ? Math.max(0, Number(t.currentSetAway || 0) + delta)
+              : Number(t.currentSetAway || 0),
         },
       };
     });
@@ -472,34 +438,24 @@ function LiveMatchControl() {
 
   const handleEndCurrentSet = async () => {
     if (!selectedMatch || !rule) return;
-
     await updateFixtureWithCallback(selectedMatch.id, (match) => {
-      const current = match.timing || {};
-      const setNumber = Number(current.currentSetNumber || 1);
-      const home = Number(current.currentSetHome || 0);
-      const away = Number(current.currentSetAway || 0);
-
-      let homeSetsWon = Number(current.homeSetsWon || 0);
-      let awaySetsWon = Number(current.awaySetsWon || 0);
-
+      const t = match.timing || {};
+      const home = Number(t.currentSetHome || 0);
+      const away = Number(t.currentSetAway || 0);
+      let homeSetsWon = Number(t.homeSetsWon || 0);
+      let awaySetsWon = Number(t.awaySetsWon || 0);
       const winner = home > away ? "home" : away > home ? "away" : null;
       if (winner === "home") homeSetsWon += 1;
       if (winner === "away") awaySetsWon += 1;
-
-      const nextSets = [
-        ...(current.sets || []),
-        { setNumber, home, away, winner },
-      ];
-
+      const nextSets = [...(t.sets || []), { setNumber: t.currentSetNumber, home, away, winner }];
       const ended =
         homeSetsWon >= Number(rule.setsToWin || 2) ||
         awaySetsWon >= Number(rule.setsToWin || 2);
-
       return {
         ...match,
         status: ended ? "Ended" : "Break",
         timing: {
-          ...current,
+          ...t,
           phase: ended ? "Ended" : "Set Break",
           isRunning: false,
           homeSetsWon,
@@ -510,10 +466,8 @@ function LiveMatchControl() {
         },
       };
     });
-
     await recalculateAllPlayerStats();
-
-    const refreshed = fixtures.find((item) => String(item.id) === String(selectedMatch.id));
+    const refreshed = fixtures.find((f) => String(f.id) === String(selectedMatch.id));
     if (refreshed?.status === "Ended") {
       await syncSingleResultFromFixture(refreshed);
       await recalculateTablesFromEndedFixtures();
@@ -522,19 +476,17 @@ function LiveMatchControl() {
 
   const handleStartNextSet = async () => {
     if (!selectedMatch) return;
-
     await updateFixtureWithCallback(selectedMatch.id, (match) => {
-      const current = match.timing || {};
-      const nextSet = Number(current.currentSetNumber || 1) + 1;
-
+      const t = match.timing || {};
+      const next = Number(t.currentSetNumber || 1) + 1;
       return {
         ...match,
         status: "Live",
         timing: {
-          ...current,
-          phase: `Set ${nextSet}`,
+          ...t,
+          phase: `Set ${next}`,
           isRunning: true,
-          currentSetNumber: nextSet,
+          currentSetNumber: next,
           currentSetHome: 0,
           currentSetAway: 0,
         },
@@ -542,17 +494,24 @@ function LiveMatchControl() {
     });
   };
 
-  const formatSeconds = (totalSeconds) => {
-    const minutes = Math.floor(Number(totalSeconds || 0) / 60);
-    const seconds = Number(totalSeconds || 0) % 60;
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  const eventIcon = (type) => {
+    const icons = {
+      Goal: "⚽",
+      "Yellow Card": "🟨",
+      "Red Card": "🟥",
+      Substitution: "🔄",
+      Score: "🏀",
+    };
+    return icons[type] || "•";
   };
 
   return (
     <AdminLayout>
+
+      {/* Match selector */}
       <div className="admin-section-card">
         <h2>Live Match Control</h2>
-
+        <p>Select a match to manage.</p>
         <select
           className="admin-select"
           value={selectedMatchId}
@@ -564,7 +523,8 @@ function LiveMatchControl() {
           <option value="">Select match</option>
           {fixtures.map((match) => (
             <option key={match.id} value={match.id}>
-              {match.homeTeam} vs {match.awayTeam}
+              {match.homeTeam} vs {match.awayTeam}{" "}
+              {match.status === "Live" ? "🔴" : match.status === "Halftime" ? "⏸" : ""}
             </option>
           ))}
         </select>
@@ -572,121 +532,228 @@ function LiveMatchControl() {
 
       {selectedMatch && (
         <>
-          <div className="admin-section-card">
-            <h2>
-              {selectedMatch.homeTeam} {selectedMatch.score?.home ?? 0} - {selectedMatch.score?.away ?? 0} {selectedMatch.awayTeam}
-            </h2>
-            <p><strong>Sport:</strong> {selectedMatch.sport}</p>
-            <p><strong>Category:</strong> {selectedMatch.category}</p>
-            <p><strong>Status:</strong> {selectedMatch.status}</p>
-            <p><strong>Phase:</strong> {timing.phase || "Pre-Match"}</p>
+          {/* ── SCOREBOARD ── */}
+          <div className="lmc-scoreboard">
+
+            {/* top bar */}
+            <div className="lmc-sb__topbar">
+              <span className="lmc-sb__competition">
+                {selectedMatch.competitionName || selectedMatch.sport}
+                {selectedMatch.category ? ` · ${selectedMatch.category}` : ""}
+              </span>
+              <div className="lmc-sb__badges">
+                <span className={`lmc-sb__status ${statusClass(selectedMatch.status)}`}>
+                  {selectedMatch.status === "Live" && (
+                    <span className="lmc-sb__pulse" />
+                  )}
+                  {selectedMatch.status}
+                </span>
+                {timing.phase && timing.phase !== selectedMatch.status && (
+                  <span className="lmc-sb__phase">{timing.phase}</span>
+                )}
+              </div>
+            </div>
+
+            {/* main score row */}
+            <div className="lmc-sb__main">
+              <div className="lmc-sb__team lmc-sb__team--home">
+                <span className="lmc-sb__team-name">{selectedMatch.homeTeam}</span>
+                <span className="lmc-sb__score">{selectedMatch.score?.home ?? 0}</span>
+              </div>
+
+              <div className="lmc-sb__center">
+                {rule?.mode === "clock" ? (
+                  <div className="lmc-sb__timer">
+                    <span className="lmc-sb__timer-label">
+                      {timing.periodLabel || "Half"} {timing.currentPeriod || "—"}
+                    </span>
+                    <span className="lmc-sb__timer-value">
+                      {formatSeconds(derivedRemainingSeconds)}
+                    </span>
+                    <span className="lmc-sb__timer-sub">
+                      {timing.isRunning ? "Running" : "Stopped"}
+                    </span>
+                  </div>
+                ) : rule?.mode === "sets" ? (
+                  <div className="lmc-sb__sets">
+                    <span className="lmc-sb__sets-label">Sets</span>
+                    <span className="lmc-sb__sets-score">
+                      {timing.homeSetsWon ?? 0} – {timing.awaySetsWon ?? 0}
+                    </span>
+                    <span className="lmc-sb__sets-current">
+                      {timing.currentSetHome ?? 0} – {timing.currentSetAway ?? 0}
+                    </span>
+                    <span className="lmc-sb__sets-sub">
+                      {timing.phase || "Pre-Match"}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="lmc-sb__vs">VS</span>
+                )}
+              </div>
+
+              <div className="lmc-sb__team lmc-sb__team--away">
+                <span className="lmc-sb__score">{selectedMatch.score?.away ?? 0}</span>
+                <span className="lmc-sb__team-name">{selectedMatch.awayTeam}</span>
+              </div>
+            </div>
+
+            {/* stat row — cards + subs */}
+            {normalizeSport(selectedMatch.sport) === "football" && (
+              <div className="lmc-sb__stats">
+                <div className="lmc-sb__stat-group">
+                  <span className="lmc-sb__stat-val">
+                    {selectedMatch.cards?.homeYellow ?? 0}🟨
+                    {selectedMatch.cards?.homeRed ?? 0}🟥
+                  </span>
+                  <span className="lmc-sb__stat-label">Cards</span>
+                  <span className="lmc-sb__stat-val">
+                    {selectedMatch.cards?.awayYellow ?? 0}🟨
+                    {selectedMatch.cards?.awayRed ?? 0}🟥
+                  </span>
+                </div>
+                <div className="lmc-sb__stat-group">
+                  <span className="lmc-sb__stat-val">
+                    {selectedMatch.substitutions?.home ?? 0}
+                  </span>
+                  <span className="lmc-sb__stat-label">Subs</span>
+                  <span className="lmc-sb__stat-val">
+                    {selectedMatch.substitutions?.away ?? 0}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* meta */}
+            <div className="lmc-sb__meta">
+              {selectedMatch.date && <span>{selectedMatch.date}</span>}
+              {selectedMatch.venue && <span>{selectedMatch.venue}</span>}
+              {selectedMatch.stage && <span>{selectedMatch.stage}</span>}
+            </div>
           </div>
 
+          {/* ── CLOCK CONTROLS ── */}
           {rule?.mode === "clock" && (
             <div className="admin-section-card">
-              <h2>Clock Control</h2>
-              <p>
-                <strong>{timing.periodLabel || "Half"}:</strong> {timing.currentPeriod || 0}
-              </p>
-              <p>
-                <strong>Timer:</strong> {formatSeconds(derivedRemainingSeconds)}
-              </p>
-
+              <h2>Clock Controls</h2>
               <div className="admin-actions">
                 {selectedMatch.status === "Upcoming" && (
                   <button type="button" onClick={handleStartClockMatch}>
-                    Start Match
+                    ▶ Start Match
                   </button>
                 )}
-
                 {selectedMatch.status === "Live" && timing.isRunning && (
                   <button type="button" onClick={handlePauseClock}>
-                    Pause
+                    ⏸ Pause
                   </button>
                 )}
-
-                {selectedMatch.status === "Live" && !timing.isRunning && timing.phase === "Paused" && (
-                  <button type="button" onClick={handleResumeClock}>
-                    Resume
-                  </button>
-                )}
-
+                {selectedMatch.status === "Live" &&
+                  !timing.isRunning &&
+                  timing.phase === "Paused" && (
+                    <button type="button" onClick={handleResumeClock}>
+                      ▶ Resume
+                    </button>
+                  )}
                 {selectedMatch.status === "Live" &&
                   Number(timing.currentPeriod || 1) === 1 && (
                     <button type="button" onClick={handleEndFirstHalf}>
-                      End First Half
+                      ⏹ End First Half
                     </button>
                   )}
-
                 {selectedMatch.status === "Halftime" && (
                   <button type="button" onClick={handleStartSecondHalf}>
-                    Start Second Half
+                    ▶ Start Second Half
                   </button>
                 )}
-
-                {(selectedMatch.status === "Live" &&
-                  Number(timing.currentPeriod || 1) === 2) && (
-                  <button type="button" onClick={handleEndMatch}>
-                    End Match
-                  </button>
-                )}
+                {selectedMatch.status === "Live" &&
+                  Number(timing.currentPeriod || 1) === 2 && (
+                    <button type="button" onClick={handleEndMatch}>
+                      🏁 End Match
+                    </button>
+                  )}
               </div>
             </div>
           )}
 
+          {/* ── SET CONTROLS ── */}
           {rule?.mode === "sets" && (
             <div className="admin-section-card">
-              <h2>Set Control</h2>
-              <p><strong>Current Set:</strong> {timing.currentSetNumber || 0}</p>
-              <p>
-                <strong>Sets Won:</strong> {selectedMatch.homeTeam} {timing.homeSetsWon || 0} - {timing.awaySetsWon || 0} {selectedMatch.awayTeam}
-              </p>
-              <p>
-                <strong>Current Set Score:</strong> {selectedMatch.homeTeam} {timing.currentSetHome || 0} - {timing.currentSetAway || 0} {selectedMatch.awayTeam}
-              </p>
-
+              <h2>Set Controls</h2>
               <div className="admin-actions">
                 {selectedMatch.status === "Upcoming" && (
                   <button type="button" onClick={handleStartSetMatch}>
-                    Start Match
+                    ▶ Start Match
                   </button>
                 )}
-
                 {selectedMatch.status === "Live" && (
                   <>
-                    <button type="button" onClick={() => handleUpdateCurrentSetScore("home", 1)}>
-                      +1 Home
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateCurrentSetScore("home", 1)}
+                    >
+                      +1 {selectedMatch.homeTeam}
                     </button>
-                    <button type="button" onClick={() => handleUpdateCurrentSetScore("away", 1)}>
-                      +1 Away
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateCurrentSetScore("away", 1)}
+                    >
+                      +1 {selectedMatch.awayTeam}
                     </button>
-                    <button type="button" onClick={() => handleUpdateCurrentSetScore("home", -1)}>
-                      -1 Home
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateCurrentSetScore("home", -1)}
+                    >
+                      -1 {selectedMatch.homeTeam}
                     </button>
-                    <button type="button" onClick={() => handleUpdateCurrentSetScore("away", -1)}>
-                      -1 Away
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateCurrentSetScore("away", -1)}
+                    >
+                      -1 {selectedMatch.awayTeam}
                     </button>
                     <button type="button" onClick={handleEndCurrentSet}>
-                      End Current Set
+                      ⏹ End Set
                     </button>
                   </>
                 )}
-
                 {timing.phase === "Set Break" && selectedMatch.status !== "Ended" && (
                   <button type="button" onClick={handleStartNextSet}>
-                    Start Next Set
+                    ▶ Start Next Set
                   </button>
                 )}
-
                 {selectedMatch.status !== "Ended" && (
                   <button type="button" onClick={handleEndMatch}>
-                    End Match
+                    🏁 End Match
                   </button>
                 )}
               </div>
+
+              {/* completed sets */}
+              {(timing.sets || []).length > 0 && (
+                <div style={{ marginTop: "1rem" }}>
+                  <p><strong>Completed Sets</strong></p>
+                  <div className="admin-list" style={{ marginTop: "0.5rem" }}>
+                    {timing.sets.map((s, i) => (
+                      <div className="admin-list-card" key={i}>
+                        <p>
+                          Set {s.setNumber}: {selectedMatch.homeTeam}{" "}
+                          <strong>{s.home}</strong> – <strong>{s.away}</strong>{" "}
+                          {selectedMatch.awayTeam}
+                          {s.winner && (
+                            <span style={{ marginLeft: "0.5rem", color: "#facc15" }}>
+                              ({s.winner === "home" ? selectedMatch.homeTeam : selectedMatch.awayTeam} wins)
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
+          {/* ── ADD EVENT ── */}
           <div className="admin-section-card">
             <h2>{editingEventId ? "Edit Event" : "Add Event"}</h2>
 
@@ -695,7 +762,7 @@ function LiveMatchControl() {
                 <input
                   type="text"
                   name="minute"
-                  placeholder="Minute / Stage note"
+                  placeholder="Minute (e.g. 45)"
                   value={eventForm.minute}
                   onChange={handleEventChange}
                   required
@@ -717,15 +784,15 @@ function LiveMatchControl() {
                 >
                   {normalizeSport(selectedMatch.sport) === "football" ? (
                     <>
-                      <option value="Goal">Goal</option>
-                      <option value="Yellow Card">Yellow Card</option>
-                      <option value="Red Card">Red Card</option>
-                      <option value="Substitution">Substitution</option>
+                      <option value="Goal">⚽ Goal</option>
+                      <option value="Yellow Card">🟨 Yellow Card</option>
+                      <option value="Red Card">🟥 Red Card</option>
+                      <option value="Substitution">🔄 Substitution</option>
                     </>
                   ) : (
                     <>
                       <option value="Score">Score</option>
-                      <option value="Substitution">Substitution</option>
+                      <option value="Substitution">🔄 Substitution</option>
                     </>
                   )}
                 </select>
@@ -737,9 +804,9 @@ function LiveMatchControl() {
                     onChange={handleEventChange}
                   >
                     <option value="">Select player</option>
-                    {(currentTeam?.players || []).map((player) => (
-                      <option key={player.id} value={player.id}>
-                        {player.name}
+                    {(currentTeam?.players || []).map((p) => (
+                      <option key={p.id} value={p.id}>
+                        #{p.jerseyNumber || "—"} {p.name}
                       </option>
                     ))}
                   </select>
@@ -751,22 +818,21 @@ function LiveMatchControl() {
                       onChange={handleEventChange}
                     >
                       <option value="">Player out</option>
-                      {(currentTeam?.players || []).map((player) => (
-                        <option key={player.id} value={player.id}>
-                          {player.name}
+                      {(currentTeam?.players || []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          #{p.jerseyNumber || "—"} {p.name}
                         </option>
                       ))}
                     </select>
-
                     <select
                       name="playerInId"
                       value={eventForm.playerInId}
                       onChange={handleEventChange}
                     >
                       <option value="">Player in</option>
-                      {(currentTeam?.players || []).map((player) => (
-                        <option key={player.id} value={player.id}>
-                          {player.name}
+                      {(currentTeam?.players || []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          #{p.jerseyNumber || "—"} {p.name}
                         </option>
                       ))}
                     </select>
@@ -791,7 +857,7 @@ function LiveMatchControl() {
                   placeholder="Optional note"
                   value={eventForm.note}
                   onChange={handleEventChange}
-                  rows="3"
+                  rows="2"
                 />
               </div>
 
@@ -808,44 +874,34 @@ function LiveMatchControl() {
             </form>
           </div>
 
-          {rule?.mode === "sets" && (
-            <div className="admin-section-card">
-              <h2>Completed Sets</h2>
-              <div className="admin-list">
-                {(timing.sets || []).length ? (
-                  timing.sets.map((item, index) => (
-                    <div className="admin-list-card" key={index}>
-                      <p>
-                        <strong>Set {item.setNumber}:</strong> {selectedMatch.homeTeam} {item.home} - {item.away} {selectedMatch.awayTeam}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p>No completed sets yet.</p>
-                )}
-              </div>
-            </div>
-          )}
-
+          {/* ── EVENTS LOG ── */}
           <div className="admin-section-card">
             <h2>Match Events</h2>
-
             <div className="admin-list">
               {selectedMatch.events?.length ? (
                 selectedMatch.events.map((item) => (
-                  <div className="admin-list-card" key={item.id}>
-                    <p>
-                      <strong>{item.minute}</strong> — {item.type} —{" "}
-                      {item.type === "Substitution"
-                        ? `${resolvePlayerName(item.playerOutId, item.teamSide)} out, ${resolvePlayerName(
-                            item.playerInId,
-                            item.teamSide
-                          )} in`
-                        : resolvePlayerName(item.playerId, item.teamSide)}
-                      {item.note ? ` — ${item.note}` : ""}
-                    </p>
-
-                    <div className="admin-actions">
+                  <div className="admin-list-card lmc-event-card" key={item.id}>
+                    <div className="lmc-event__left">
+                      <span className="lmc-event__icon">{eventIcon(item.type)}</span>
+                      <div>
+                        <p className="lmc-event__line">
+                          <strong>{item.minute}'</strong> —{" "}
+                          <span className="lmc-event__type">{item.type}</span> —{" "}
+                          {item.type === "Substitution"
+                            ? `${resolvePlayerName(item.playerOutId, item.teamSide)} ↓  ${resolvePlayerName(item.playerInId, item.teamSide)} ↑`
+                            : resolvePlayerName(item.playerId, item.teamSide)}
+                          <span className="lmc-event__team">
+                            {item.teamSide === "home"
+                              ? ` (${selectedMatch.homeTeam})`
+                              : ` (${selectedMatch.awayTeam})`}
+                          </span>
+                        </p>
+                        {item.note && (
+                          <p className="lmc-event__note">{item.note}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="admin-actions" style={{ marginTop: 0 }}>
                       <button type="button" onClick={() => handleEditEvent(item)}>
                         Edit
                       </button>
@@ -856,7 +912,7 @@ function LiveMatchControl() {
                   </div>
                 ))
               ) : (
-                <p>No live events yet.</p>
+                <p>No events yet.</p>
               )}
             </div>
           </div>

@@ -5,7 +5,7 @@ function Footer() {
     <footer className="footer">
       <div className="container footer__wrapper">
         <div className="footer__brand">
-          <h3>Formidable Sports</h3>
+          <h3>ARTLYMPICS</h3>
           <p>
             The official faculty sports platform for fixtures, results, live
             updates, teams, records, and competition information.
@@ -27,7 +27,7 @@ function Footer() {
             <Link to="/gallery">Gallery</Link>
             <Link to="/faq">FAQ</Link>
             <Link to="/contact">Contact</Link>
-            <Link to="/about-fasa">About FASA</Link>
+            <Link to="/about-fasa">About </Link>
           </div>
 
           <div>
@@ -64,7 +64,7 @@ function Footer() {
       </div>
 
       <div className="container footer__bottom">
-        <p>© 2026 Formidable Sports. All rights reserved.</p>
+        <p>© 2026 ARTLYMPICS Sports. All rights reserved.</p>
         <p className="footer__stamp">
           Designed and developed by <span>EbenAdex</span>
         </p>

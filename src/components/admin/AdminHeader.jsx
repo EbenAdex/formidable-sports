@@ -6,7 +6,7 @@ function AdminHeader() {
   return (
     <div className="admin-header">
       <div>
-        <h1 className="admin-header__title">Formidable Sports Admin</h1>
+        <h1 className="admin-header__title">ARTLYMPICS Admin</h1>
         <p className="admin-header__text">
           Manage fixtures, results, sports updates, and users.
         </p>

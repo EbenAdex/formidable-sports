@@ -26,7 +26,7 @@ function Navbar() {
     <header className="navbar">
       <div className="container navbar__wrapper">
         <Link to="/" className="navbar__logo" onClick={closeMenu}>
-          Formidable <span>Sports</span>
+          ARTLYMPICS <span>Sports</span>
         </Link>
 
         <button
@@ -102,6 +102,11 @@ function Navbar() {
 
               <NavLink to="/table" className="navbar__dropdown-link" onClick={closeMenu}>
                 Table
+              </NavLink>
+
+               
+              <NavLink to="/medals" className="navbar__dropdown-link" onClick={closeMenu}>
+                Medals
               </NavLink>
               
               <NavLink to="/rankings" className="navbar__dropdown-link" onClick={closeMenu}>
@@ -222,7 +227,7 @@ function Navbar() {
                 className="navbar__dropdown-link"
                 onClick={closeMenu}
               >
-                About FASA
+                About
               </NavLink>
 
               <NavLink

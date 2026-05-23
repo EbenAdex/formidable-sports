@@ -7,7 +7,7 @@ function SportsHighlights() {
       <div className="container">
         <div className="section__top">
           <h2>Sports Categories</h2>
-          <p>Explore all sporting activities available on Formidable Sports.</p>
+          <p>Explore all sporting activities available on ARTLYMPICS.</p>
         </div>
 
         <div className="sports-grid">

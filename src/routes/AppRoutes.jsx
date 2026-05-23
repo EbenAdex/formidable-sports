@@ -24,6 +24,7 @@ import ManageTeams from "../pages/admin/ManageTeams";
 import ManageSports from "../pages/admin/ManageSports";
 import LiveMatchControl from "../pages/admin/LiveMatchControl";
 import ManageLineups from "../pages/admin/ManageLineups";
+import ManageMedals from "../pages/admin/ManageMedals";
 import Table from "../pages/Table";
 import Teams from "../pages/Teams";
 import ResultDetails from "../pages/ResultDetails";
@@ -43,6 +44,7 @@ import GalleryDetails from "../pages/GalleryDetails";
 import NewsDetails from "../pages/NewsDetails";
 import ManageGallery from "../pages/admin/ManageGallery";
 import AboutFasa from "../pages/AboutFasa";
+import Medals from "../pages/Medals"
 
 import FirestoreTest from "../pages/FirestoreTest";
 import TeamsMigration from "../pages/TeamsMigration";
@@ -244,6 +246,14 @@ function AppRoutes() {
         }
       />
       <Route
+      path="/medals"
+      element={
+        <ProtectedRoute>
+          <Medals />
+        </ProtectedRoute>
+      }
+      />
+      <Route
         path="/rankings"
         element={
           <ProtectedRoute>
@@ -382,6 +392,17 @@ function AppRoutes() {
           </AdminRoute>
         }
       />
+
+      <Route
+        path="/admin/medals"
+        element={
+          <AdminRoute>
+            <ManageMedals />
+          </AdminRoute>
+        }
+      />
+
+
 
       <Route path="/firestore-test" element={<FirestoreTest />} />
       <Route path="/migrate-teams" element={<TeamsMigration />} />

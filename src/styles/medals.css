@@ -1,0 +1,121 @@
+.medals-page {
+  min-height: 100vh;
+  padding: 120px 40px 60px;
+  background: #050505;
+  color: #ffffff;
+}
+
+.medals-header {
+  margin-bottom: 40px;
+}
+
+.medals-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.medals-header p {
+  color: #9ca3af;
+  font-size: 1rem;
+}
+
+.medals-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 20px;
+  background: rgba(18, 18, 18, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+}
+
+.medals-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.medals-table thead {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.medals-table th {
+  padding: 18px;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.medals-table td {
+  padding: 18px;
+  font-size: 0.95rem;
+  color: #e5e7eb;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.medals-table tbody tr {
+  transition: all 0.3s ease;
+}
+
+.medals-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.medals-table tbody tr:nth-child(1) {
+  background: rgba(255, 215, 0, 0.08);
+}
+
+.medals-table tbody tr:nth-child(2) {
+  background: rgba(192, 192, 192, 0.06);
+}
+
+.medals-table tbody tr:nth-child(3) {
+  background: rgba(205, 127, 50, 0.06);
+}
+
+.medals-table td:first-child {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.medals-table td:nth-child(3) {
+  color: #facc15;
+  font-weight: 700;
+}
+
+.medals-table td:nth-child(4) {
+  color: #d1d5db;
+  font-weight: 700;
+}
+
+.medals-table td:nth-child(5) {
+  color: #fb923c;
+  font-weight: 700;
+}
+
+.empty-medals {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  font-size: 1rem;
+}
+
+@media screen and (max-width: 768px) {
+  .medals-page {
+    padding: 100px 16px 40px;
+  }
+
+  .medals-header h1 {
+    font-size: 2rem;
+  }
+
+  .medals-table th,
+  .medals-table td {
+    padding: 14px;
+    font-size: 0.85rem;
+  }
+}
