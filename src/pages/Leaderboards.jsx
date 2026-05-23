@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import { useAppData, isValidCategory } from "../context/AppDataContext";
+
 import {
   getAllPlayersFromTeams,
   getTopScorers,
@@ -10,7 +11,8 @@ import {
 } from "../utils/playerStats";
 
 function Leaderboards() {
-  const { teams, sports } = useAppData();
+  const { teams, sports, table } = useAppData();
+
   const [selectedSport, setSelectedSport] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("male");
 
@@ -19,45 +21,84 @@ function Leaderboards() {
       if (!isValidCategory(team.category)) return false;
 
       const categoryMatch =
-        team.category.toLowerCase() === selectedCategory.toLowerCase();
+        team.category.toLowerCase() ===
+        selectedCategory.toLowerCase();
 
       const sportMatch =
         selectedSport === "all" ||
         (team.sports || []).some(
-          (sport) => sport.toLowerCase() === selectedSport.toLowerCase()
+          (sport) =>
+            sport.toLowerCase() ===
+            selectedSport.toLowerCase()
         );
 
       return categoryMatch && sportMatch;
     });
   }, [teams, selectedSport, selectedCategory]);
 
-  const allPlayers = getAllPlayersFromTeams(filteredTeams);
-  const topScorers = getTopScorers(allPlayers, 10);
-  const topCleanSheets = getTopCleanSheets(allPlayers, 10);
-  const topPoints = getTopPoints(allPlayers, 10);
+  const filteredTable = useMemo(() => {
+    return table.filter((row) => {
+      const categoryMatch =
+        row.category?.toLowerCase() ===
+        selectedCategory.toLowerCase();
+
+      const sportMatch =
+        selectedSport === "all" ||
+        row.sport?.toLowerCase() ===
+          selectedSport.toLowerCase();
+
+      return categoryMatch && sportMatch;
+    });
+  }, [table, selectedSport, selectedCategory]);
+
+  const allPlayers =
+    getAllPlayersFromTeams(filteredTeams);
+
+  const topScorers =
+    getTopScorers(allPlayers, 10);
+
+  const topCleanSheets =
+    getTopCleanSheets(allPlayers, 10);
+
+  const topPoints =
+    getTopPoints(filteredTable, 10);
 
   return (
     <>
       <Navbar />
       <div className="navbar-spacer" />
+
       <main className="page-shell">
         <div className="container">
+
           <div className="page-header-block">
             <h1>Leaderboards</h1>
+
             <p className="page-intro">
-              Track the best individual performers by sport and category.
+              Track the best individual and team
+              performances across all competitions.
             </p>
           </div>
 
           <div className="page-card">
+
             <div className="team-search-bar">
+
               <select
                 value={selectedSport}
-                onChange={(e) => setSelectedSport(e.target.value)}
+                onChange={(e) =>
+                  setSelectedSport(e.target.value)
+                }
               >
-                <option value="all">All Sports</option>
+                <option value="all">
+                  All Sports
+                </option>
+
                 {sports.map((sport) => (
-                  <option key={sport.id} value={sport.name}>
+                  <option
+                    key={sport.id}
+                    value={sport.name}
+                  >
                     {sport.name}
                   </option>
                 ))}
@@ -65,65 +106,116 @@ function Leaderboards() {
 
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) =>
+                  setSelectedCategory(e.target.value)
+                }
               >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
+                <option value="male">
+                  Male
+                </option>
+
+                <option value="female">
+                  Female
+                </option>
               </select>
+
             </div>
 
             <div className="leaderboard-grid">
+
+              {/* TOP SCORERS */}
+
               <div className="leaderboard-card">
                 <h2>Top Scorers</h2>
+
                 {topScorers.length ? (
                   topScorers.map((player, index) => (
-                    <div className="leaderboard-item" key={`${player.teamId}-${player.id}`}>
+                    <div
+                      className="leaderboard-item"
+                      key={`${player.teamId}-${player.id}`}
+                    >
                       <span>
-                        {index + 1}. {player.name} ({player.teamName})
+                        {index + 1}.{" "}
+                        {player.name} (
+                        {player.teamName})
                       </span>
-                      <strong>{player.goals || 0}</strong>
+
+                      <strong>
+                        {player.goals || 0}
+                      </strong>
                     </div>
                   ))
                 ) : (
-                  <p>No scorer data yet.</p>
+                  <p className="leaderboard-empty">
+                    No scorer data yet.
+                  </p>
                 )}
               </div>
+
+              {/* CLEAN SHEETS */}
 
               <div className="leaderboard-card">
                 <h2>Top Clean Sheets</h2>
+
                 {topCleanSheets.length ? (
-                  topCleanSheets.map((player, index) => (
-                    <div className="leaderboard-item" key={`${player.teamId}-${player.id}`}>
-                      <span>
-                        {index + 1}. {player.name} ({player.teamName})
-                      </span>
-                      <strong>{player.cleanSheets || 0}</strong>
-                    </div>
-                  ))
+                  topCleanSheets.map(
+                    (player, index) => (
+                      <div
+                        className="leaderboard-item"
+                        key={`${player.teamId}-${player.id}`}
+                      >
+                        <span>
+                          {index + 1}.{" "}
+                          {player.name} (
+                          {player.teamName})
+                        </span>
+
+                        <strong>
+                          {player.cleanSheets || 0}
+                        </strong>
+                      </div>
+                    )
+                  )
                 ) : (
-                  <p style={{color: 'white'}}>No clean sheet data yet.</p>
+                  <p className="leaderboard-empty">
+                    No clean sheet data yet.
+                  </p>
                 )}
               </div>
 
+              {/* TOP POINTS */}
+
               <div className="leaderboard-card">
-                <h2>Top Points</h2>
+                <h2>Top Teams</h2>
+
                 {topPoints.length ? (
-                  topPoints.map((player, index) => (
-                    <div className="leaderboard-item" key={`${player.teamId}-${player.id}`}>
+                  topPoints.map((team, index) => (
+                    <div
+                      className="leaderboard-item"
+                      key={team.id}
+                    >
                       <span>
-                        {index + 1}. {player.name} ({player.teamName})
+                        {index + 1}.{" "}
+                        {team.team}
                       </span>
-                      <strong>{player.points || 0}</strong>
+
+                      <strong>
+                        {team.points || 0}
+                      </strong>
                     </div>
                   ))
                 ) : (
-                  <p>No points data yet.</p>
+                  <p className="leaderboard-empty">
+                    No points data yet.
+                  </p>
                 )}
               </div>
+
             </div>
           </div>
         </div>
       </main>
+
       <Footer />
     </>
   );

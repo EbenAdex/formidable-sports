@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import { useAppData } from "../../context/AppDataContext";
 
@@ -6,241 +6,391 @@ const MAX_STARTERS = {
   Football: 11,
   Basketball: 5,
   Volleyball: 6,
-  "Table Tennis": 1,
+  Tennis: 1,
 };
 
 function ManageLineups() {
-  const { fixtures, players, getTeamById, updateFixtureWithCallback } = useAppData();
-  const [selectedMatchId, setSelectedMatchId] = useState(fixtures[0]?.id || "");
+  const { fixtures, teams, updateFixture } =
+    useAppData();
 
-  const [homeCoach, setHomeCoach] = useState("");
-  const [awayCoach, setAwayCoach] = useState("");
-  const [homePlayerIds, setHomePlayerIds] = useState([]);
-  const [awayPlayerIds, setAwayPlayerIds] = useState([]);
-  const [filterCategory, setFilterCategory] = useState("");
-const [filterSport, setFilterSport] = useState("");
+  const [selectedFixtureId, setSelectedFixtureId] =
+    useState(fixtures[0]?.id || "");
 
+  const [selectedSport, setSelectedSport] =
+    useState("Football");
 
+  const [selectedCategory, setSelectedCategory] =
+    useState("Male");
 
-  const selectedMatch = fixtures.find(
-    (match) => String(match.id) === String(selectedMatchId)
-  );
+  const [homeCoach, setHomeCoach] =
+    useState("");
 
-   const matchCategory = selectedMatch?.category || selectedMatch?.gender;
+  const [awayCoach, setAwayCoach] =
+    useState("");
 
-  const homeTeam = selectedMatch ? getTeamById(selectedMatch.homeTeamId) : null;
-  const awayTeam = selectedMatch ? getTeamById(selectedMatch.awayTeamId) : null;
+  const [homeStarters, setHomeStarters] =
+    useState([]);
 
+  const [awayStarters, setAwayStarters] =
+    useState([]);
 
-  console.log("Match Category:", matchCategory);
-console.log("Home Players:", homeTeam?.players);
-console.log("Away Players:", awayTeam?.players);
-  useEffect(() => {
-    if (!selectedMatch) return;
+  const normalize = (value = "") =>
+    String(value).trim().toLowerCase();
 
-    setHomeCoach(selectedMatch.lineups?.homeCoach || "");
-    setAwayCoach(selectedMatch.lineups?.awayCoach || "");
-    setHomePlayerIds(selectedMatch.lineups?.homePlayerIds || []);
-    setAwayPlayerIds(selectedMatch.lineups?.awayPlayerIds || []);
-    setFilterCategory(selectedMatch.category || selectedMatch.gender || "");
-  setFilterSport(selectedMatch.sport || "");
-  }, [selectedMatch]);
+  const filteredFixtures = useMemo(() => {
+    return fixtures.filter(
+      (fixture) =>
+        normalize(fixture.sport) ===
+          normalize(selectedSport) &&
+        normalize(fixture.category) ===
+          normalize(selectedCategory)
+    );
+  }, [
+    fixtures,
+    selectedSport,
+    selectedCategory,
+  ]);
 
-  const togglePlayer = (side, playerId) => {
-    const max = MAX_STARTERS[selectedMatch?.sport] || 11;
+  const selectedFixture = useMemo(() => {
+    return filteredFixtures.find(
+      (fixture) =>
+        String(fixture.id) ===
+        String(selectedFixtureId)
+    );
+  }, [filteredFixtures, selectedFixtureId]);
+
+  const homeTeam = useMemo(() => {
+    if (!selectedFixture) return null;
+
+    return teams.find((team) => {
+      const sameDepartment =
+        normalize(team.name) ===
+        normalize(selectedFixture.homeTeam);
+
+      const sameCategory =
+        normalize(team.category) ===
+        normalize(selectedFixture.category);
+
+      const sameSport =
+        normalize(team.sport) ===
+          normalize(selectedFixture.sport) ||
+        (team.sports || []).some(
+          (sport) =>
+            normalize(sport) ===
+            normalize(selectedFixture.sport)
+        );
+
+      return (
+        sameDepartment &&
+        sameCategory &&
+        sameSport
+      );
+    });
+  }, [selectedFixture, teams]);
+
+  const awayTeam = useMemo(() => {
+    if (!selectedFixture) return null;
+
+    return teams.find((team) => {
+      const sameDepartment =
+        normalize(team.name) ===
+        normalize(selectedFixture.awayTeam);
+
+      const sameCategory =
+        normalize(team.category) ===
+        normalize(selectedFixture.category);
+
+      const sameSport =
+        normalize(team.sport) ===
+          normalize(selectedFixture.sport) ||
+        (team.sports || []).some(
+          (sport) =>
+            normalize(sport) ===
+            normalize(selectedFixture.sport)
+        );
+
+      return (
+        sameDepartment &&
+        sameCategory &&
+        sameSport
+      );
+    });
+  }, [selectedFixture, teams]);
+
+  const toggleStarter = (
+    side,
+    playerId
+  ) => {
+    const limit =
+      MAX_STARTERS[selectedSport] || 11;
 
     if (side === "home") {
-      setHomePlayerIds((prev) => {
+      setHomeStarters((prev) => {
         if (prev.includes(playerId)) {
-          return prev.filter((id) => id !== playerId);
+          return prev.filter(
+            (id) => id !== playerId
+          );
         }
 
-        if (prev.length >= max) {
-          alert(`Only ${max} starters allowed`);
+        if (prev.length >= limit) {
+          alert(
+            `Maximum ${limit} starters allowed`
+          );
           return prev;
         }
 
         return [...prev, playerId];
       });
-      return;
     }
 
-    setAwayPlayerIds((prev) => {
-      if (prev.includes(playerId)) {
-        return prev.filter((id) => id !== playerId);
-      }
+    if (side === "away") {
+      setAwayStarters((prev) => {
+        if (prev.includes(playerId)) {
+          return prev.filter(
+            (id) => id !== playerId
+          );
+        }
 
-      if (prev.length >= max) {
-        alert(`Only ${max} starters allowed`);
-        return prev;
-      }
+        if (prev.length >= limit) {
+          alert(
+            `Maximum ${limit} starters allowed`
+          );
+          return prev;
+        }
 
-      return [...prev, playerId];
-    });
-  };
-
-  
-
-const handleSaveLineup = () => {
-    if (!selectedMatch) return;
-
-    if (homePlayerIds.length === 0 || awayPlayerIds.length === 0) {
-      alert("Both teams must have players selected");
-      return;
+        return [...prev, playerId];
+      });
     }
-
-    updateFixtureWithCallback(selectedMatchId, (match) => ({
-      ...match,
-      lineups: {
-        homeCoach,
-        awayCoach,
-        homePlayerIds,
-        awayPlayerIds,
-      },
-    }));
   };
 
-  const normalize = (v) => (v || "").toLowerCase().trim();
-const getFilteredPlayers = (players) => {
-  return (players || []).filter((player) => {
-    const matchesCategory =
-      !filterCategory || normalize(player.category) === normalize(filterCategory);
+  const handleSave = async () => {
+    if (!selectedFixture) return;
 
-    const matchesSport =
-      !filterSport || (player.sports || []).some(
-        (s) => normalize(s) === normalize(filterSport)
-      );
+    try {
+      await updateFixture(selectedFixture.id, {
+        lineups: {
+          homeCoach,
+          awayCoach,
+          homeStarters,
+          awayStarters,
+        },
+      });
 
-    return matchesCategory && matchesSport;
-  });
-};
- 
+      alert("Lineup saved successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save lineup");
+    }
+  };
 
-const homePlayers = homeTeam?.players || [];
-const awayPlayers = awayTeam?.players || [];
-
-const filteredHomePlayers = getFilteredPlayers(homePlayers);
-const filteredAwayPlayers = getFilteredPlayers(awayPlayers);
-
- return (
+  return (
     <AdminLayout>
-      <div className="admin-section-card">
-        <h2>Manage Lineups</h2>
-        <p>Lineups are filtered by match category and enforce player limits.</p>
+      <div className="manage-lineups-page">
+        <div className="manage-lineups-header">
+          <h1>Manage Lineups</h1>
+          <p>
+            Create official starting
+            lineups for fixtures.
+          </p>
+        </div>
 
-        <select
-          className="admin-select"
-          value={selectedMatchId || ""}
-          onChange={(e) => setSelectedMatchId(e.target.value)}
-        >
-          {fixtures.map((match) => (
-            <option key={match.id} value={match.id}>
-              {match.homeTeam} vs {match.awayTeam}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div className="lineup-top-controls">
+          <select
+            value={selectedSport}
+            onChange={(e) =>
+              setSelectedSport(
+                e.target.value
+              )
+            }
+          >
+            <option>Football</option>
+            <option>Basketball</option>
+            <option>Volleyball</option>
+            <option>Tennis</option>
+          </select>
 
-      {selectedMatch && (
-        <div className="admin-section-card">
-          <h2>
-            {selectedMatch.homeTeam} vs {selectedMatch.awayTeam}
-          </h2>
+          <select
+            value={selectedCategory}
+            onChange={(e) =>
+              setSelectedCategory(
+                e.target.value
+              )
+            }
+          >
+            <option>Male</option>
+            <option>Female</option>
+          </select>
 
-          <div className="admin-form__grid">
-            <input
-              type="text"
-              placeholder="Home Coach"
-              value={homeCoach}
-              onChange={(e) => setHomeCoach(e.target.value)}
-            />
+          <select
+            value={selectedFixtureId}
+            onChange={(e) =>
+              setSelectedFixtureId(
+                e.target.value
+              )
+            }
+          >
+            {filteredFixtures.map(
+              (fixture) => (
+                <option
+                  key={fixture.id}
+                  value={fixture.id}
+                >
+                  {fixture.homeTeam} vs{" "}
+                  {fixture.awayTeam}
+                </option>
+              )
+            )}
+          </select>
+        </div>
 
-            <input
-              type="text"
-              placeholder="Away Coach"
-              value={awayCoach}
-              onChange={(e) => setAwayCoach(e.target.value)}
-            />
-          </div>
+        {selectedFixture && (
+          <div className="lineup-main-card">
+            <div className="lineup-fixture-title">
+              <h2>
+                {selectedFixture.homeTeam} vs{" "}
+                {selectedFixture.awayTeam}
+              </h2>
 
-          <div className="admin-form__grid">
-  <select
-    value={filterCategory}
-    onChange={(e) => setFilterCategory(e.target.value)}
-  >
-    <option value="">All Categories</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-  </select>
+              <div className="lineup-tags">
+                <span>
+                  {selectedSport}
+                </span>
 
-  <select
-    value={filterSport}
-    onChange={(e) => setFilterSport(e.target.value)}
-  >
-    <option value="">All Sports</option>
-    <option value="Football">Football</option>
-    <option value="Basketball">Basketball</option>
-    <option value="Volleyball">Volleyball</option>
-    <option value="Table Tennis">Table Tennis</option>
-  </select>
-</div>
-
-          <div className="search-modal__grid">
-            {/* HOME TEAM */}
-            <div className="search-panel">
-              <h3>{selectedMatch.homeTeam} Starters</h3>
-
- 
-
-   {filteredHomePlayers.length ? (
-  filteredHomePlayers.map((player) => (
-    <label className="remember-me" key={player.id}>
-      <input
-        type="checkbox"
-        checked={homePlayerIds.includes(player.id)}
-        onChange={() => togglePlayer("home", player.id)}
-      />
-      <span>
-        #{player.jerseyNumber || "-"} {player.name} — {player.position}
-      </span>
-    </label>
-  ))
-) : (
-  <p>No players available.</p>
-)}
+                <span>
+                  {selectedCategory}
+                </span>
+              </div>
             </div>
 
-            {/* AWAY TEAM */}
-            <div className="search-panel">
-              <h3>{selectedMatch.awayTeam} Starters</h3>
-{filteredAwayPlayers.length ? (
-  filteredAwayPlayers.map((player) => (
-    <label className="remember-me" key={player.id}>
-      <input
-        type="checkbox"
-        checked={awayPlayerIds.includes(player.id)}
-        onChange={() => togglePlayer("away", player.id)}
-      />
-      <span>
-        #{player.jerseyNumber || "-"} {player.name} — {player.position}
-      </span>
-    </label>
-  ))
-) : (
-  <p>No players available.</p>
-)}
+            <div className="lineup-coach-grid">
+              <input
+                type="text"
+                placeholder="Home Coach"
+                value={homeCoach}
+                onChange={(e) =>
+                  setHomeCoach(
+                    e.target.value
+                  )
+                }
+              />
 
-    
+              <input
+                type="text"
+                placeholder="Away Coach"
+                value={awayCoach}
+                onChange={(e) =>
+                  setAwayCoach(
+                    e.target.value
+                  )
+                }
+              />
             </div>
-          </div>
 
-          <div className="admin-actions">
-            <button type="button" onClick={handleSaveLineup}>
-              Save Lineup
+            <div className="lineup-teams-grid">
+              {/* HOME */}
+              <div className="lineup-team-card">
+                <h3>
+                  {homeTeam?.name} Starters
+                </h3>
+
+                <div className="players-grid">
+                  {homeTeam?.players?.map(
+                    (player) => (
+                      <div
+                        key={player.id}
+                        className={`player-card ${
+                          homeStarters.includes(
+                            player.id
+                          )
+                            ? "active-player"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          toggleStarter(
+                            "home",
+                            player.id
+                          )
+                        }
+                      >
+                        <div className="player-number">
+                          #
+                          {player.jerseyNumber}
+                        </div>
+
+                        <div className="player-info">
+                          <h4>
+                            {player.name}
+                          </h4>
+
+                          <p>
+                            {
+                              player.position
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* AWAY */}
+              <div className="lineup-team-card">
+                <h3>
+                  {awayTeam?.name} Starters
+                </h3>
+
+                <div className="players-grid">
+                  {awayTeam?.players?.map(
+                    (player) => (
+                      <div
+                        key={player.id}
+                        className={`player-card ${
+                          awayStarters.includes(
+                            player.id
+                          )
+                            ? "active-player"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          toggleStarter(
+                            "away",
+                            player.id
+                          )
+                        }
+                      >
+                        <div className="player-number">
+                          #
+                          {player.jerseyNumber}
+                        </div>
+
+                        <div className="player-info">
+                          <h4>
+                            {player.name}
+                          </h4>
+
+                          <p>
+                            {
+                              player.position
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <button
+              className="save-lineup-btn"
+              onClick={handleSave}
+            >
+              Save Official Lineup
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </AdminLayout>
   );
 }

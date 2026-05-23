@@ -1271,3 +1271,160 @@
     gap: 0.75rem;
   }
 }
+
+.manage-lineups-page {
+  padding: 30px;
+}
+
+.manage-lineups-header h1 {
+  color: white;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.manage-lineups-header p {
+  color: #bdbdbd;
+  margin-bottom: 25px;
+}
+
+.lineup-top-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.lineup-top-controls select,
+.lineup-coach-grid input {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  background: #121212;
+  color: white;
+}
+
+.lineup-main-card {
+  background: linear-gradient(
+    145deg,
+    #101828,
+    #111827
+  );
+  padding: 30px;
+  border-radius: 20px;
+}
+
+.lineup-fixture-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.lineup-fixture-title h2 {
+  color: white;
+}
+
+.lineup-tags {
+  display: flex;
+  gap: 10px;
+}
+
+.lineup-tags span {
+  background: #ef4444;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+}
+
+.lineup-coach-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.lineup-teams-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+}
+
+.lineup-team-card {
+  background: rgba(255,255,255,0.03);
+  padding: 20px;
+  border-radius: 15px;
+}
+
+.lineup-team-card h3 {
+  color: white;
+  margin-bottom: 20px;
+}
+
+.players-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #1b2333;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.player-card:hover {
+  transform: translateY(-2px);
+}
+
+.active-player {
+  border: 2px solid #ef4444;
+  background: #2b1220;
+}
+
+.player-number {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.player-info h4 {
+  color: white;
+  margin-bottom: 4px;
+}
+
+.player-info p {
+  color: #bdbdbd;
+  font-size: 0.9rem;
+}
+
+.save-lineup-btn {
+  margin-top: 30px;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #ef4444;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .lineup-teams-grid,
+  .lineup-top-controls,
+  .lineup-coach-grid {
+    grid-template-columns: 1fr;
+  }
+}
