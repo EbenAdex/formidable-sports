@@ -1,7 +1,7 @@
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import { useAppData } from "../context/AppDataContext";
-import "../styles/Medals.css";
+import "../styles/medals.css";
 
 function Medals() {
   const { rankings = [] } = useAppData();
